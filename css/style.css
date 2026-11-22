@@ -152,8 +152,7 @@ box-shadow: 0 20px 48px rgba(0, 0, 0, 0.36);
 text-align: center;
 margin-bottom: 24px;
 }
-​/* Logo Emblem Teater pada Login & Topbar */
-.login-brand::before {
+​.login-brand::before {
 content: "🎭";
 display: flex;
 align-items: center;
@@ -1348,4 +1347,4 @@ padding: 0;
 box-shadow: none;
 border: 1px solid #cbd5e1;
 }
-  }
+}
