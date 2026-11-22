@@ -1,17 +1,13 @@
-```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guru Pengampu — Sistem Penilaian Proyek Produksi Teater</title>
-  <!-- Stylesheet utama SP-PPT -->
   <link rel="stylesheet" href="css/style.css" />
-  <!-- Pustaka pembuatan dokumen Microsoft Word (.docx) di sisi klien -->
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 </head>
 <body>
-  <!-- Bilah Navigasi Atas -->
   <header class="topbar no-print">
     <div class="topbar-inner">
       <div class="topbar-brand">
@@ -34,7 +30,6 @@
   </header>
 
   <main class="container">
-    <!-- Banner Peringatan Wajib Nomor WhatsApp Guru -->
     <section id="waRequiredBanner" class="migration-banner hidden no-print">
       <div>
         <h3>Lengkapi Nomor WhatsApp Guru Pengampu</h3>
@@ -43,7 +38,6 @@
       <button type="button" id="btnFocusProfileTab" class="btn btn-warning btn-sm">Lengkapi Sekarang</button>
     </section>
 
-    <!-- Kartu Indikator Utama (KPI) -->
     <section class="kpi-grid">
       <div class="kpi-card">
         <span class="kpi-label">Proyek Diampu</span>
@@ -67,7 +61,6 @@
       </div>
     </section>
 
-    <!-- Navigasi Tab Utama -->
     <nav class="tab-nav no-print" role="tablist">
       <button type="button" class="tab-btn active" data-tab="tabGrading">Penilaian Proyek & Rapor Siswa</button>
       <button type="button" class="tab-btn" data-tab="tabTasks">Progres Tugas & Deadline</button>
@@ -76,9 +69,6 @@
       <button type="button" class="tab-btn" data-tab="tabProfile">Profil WA, Siaran & Keamanan</button>
     </nav>
 
-    <!-- ====================================================================
-         TAB 1: PENILAIAN PROYEK & SISWA
-         ==================================================================== -->
     <section id="tabGrading" class="tab-pane">
       <div class="panel-card">
         <div class="panel-header">
@@ -114,9 +104,6 @@
       </div>
     </section>
 
-    <!-- ====================================================================
-         TAB 2: PROGRES TUGAS, TIMELINE & DEADLINE
-         ==================================================================== -->
     <section id="tabTasks" class="tab-pane hidden">
       <div class="panel-card">
         <div class="panel-header">
@@ -169,9 +156,6 @@
       </div>
     </section>
 
-    <!-- ====================================================================
-         TAB 3: KERABAT KERJA, KAS & DOKUMEN PRODUKSI (.DOCX)
-         ==================================================================== -->
     <section id="tabCrewDocs" class="tab-pane hidden">
       <div class="panel-card">
         <div class="panel-header">
@@ -208,9 +192,6 @@
       </div>
     </section>
 
-    <!-- ====================================================================
-         TAB 4: REVIEW NASKAH, PANTAUAN BLOKING & REFERENSI
-         ==================================================================== -->
     <section id="tabStudio" class="tab-pane hidden">
       <div class="cards-grid-2">
         <div class="panel-card">
@@ -276,9 +257,6 @@
       </div>
     </section>
 
-    <!-- ====================================================================
-         TAB 5: PROFIL WA, SIARAN PENGUMUMAN & DRIVE
-         ==================================================================== -->
     <section id="tabProfile" class="tab-pane hidden">
       <div class="cards-grid-2">
         <div class="form-stack">
@@ -389,7 +367,6 @@
     </section>
   </main>
 
-  <!-- MODAL INPUT / UBAH PENILAIAN SISWA -->
   <div id="gradeModal" class="modal-backdrop hidden">
     <div class="modal-card modal-lg">
       <div class="modal-header">
@@ -439,7 +416,6 @@
     </div>
   </div>
 
-  <!-- MODAL TAMBAH / UBAH TUGAS & DEADLINE OLEH GURU -->
   <div id="guruTaskModal" class="modal-backdrop hidden">
     <div class="modal-card modal-sm">
       <div class="modal-header">
@@ -486,7 +462,6 @@
     </div>
   </div>
 
-  <!-- MODAL GALERI FOTO & PROFIL E-PROGRAM BUKU ACARA -->
   <div id="eProgramModal" class="modal-backdrop hidden">
     <div class="modal-card modal-lg">
       <div class="modal-header">
@@ -560,7 +535,6 @@
       driveFolders: []
     };
 
-    // Validasi akses khusus peran TEACHER
     requireAuthRole(["TEACHER"], async (profile) => {
       currentUser = profile;
       document.getElementById("teacherNameDisplay").textContent = profile.name;
@@ -570,7 +544,6 @@
       await loadGuruData();
     });
 
-    // Memeriksa kelengkapan & format nomor WhatsApp Guru
     function validateTeacherWhatsapp() {
       const wa = String(currentUser.whatsapp || "").trim();
       const isValid = /^(08|628|\+628)[0-9]{7,13}$/.test(wa);
@@ -1472,7 +1445,6 @@
       const myGroupIds = new Set(myGroups.map((g) => g.id || g.docId));
       const myClassIds = new Set(myGroups.map((g) => g.classId));
 
-      // Review & Komentar Revisi Naskah Kelompok
       const scripts = state.scripts.filter((s) => myGroupIds.has(s.groupId));
       const scriptsContainer = document.getElementById("guruScriptsList");
       scriptsContainer.innerHTML = scripts.length
@@ -1530,7 +1502,6 @@
         });
       });
 
-      // Pantauan Bloking Panggung Kelompok
       const blkOverview = document.getElementById("guruBlockingOverview");
       blkOverview.innerHTML = myGroups.length
         ? myGroups.map((g) => {
@@ -1553,7 +1524,6 @@
           }).join("")
         : `<p class="text-muted">Belum ada kelompok binaan.</p>`;
 
-      // Referensi Audio / YouTube
       const refs = state.references.filter((r) => !r.classId || myClassIds.has(r.classId));
       document.getElementById("guruRefList").innerHTML = refs.length
         ? refs.map((r) => `
@@ -1767,4 +1737,3 @@
   </script>
 </body>
 </html>
-```
