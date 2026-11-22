@@ -3,138 +3,465 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Masuk — Sistem Penilaian Proyek Produksi Teater (SP-PPT)</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>SP-PPT • Sistem Penilaian Proyek Produksi Teater</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <style>
+    :root {
+      --bg-dark: #14070a;
+      --bg-card: #fffdf9;
+      --maroon: #711d2b;
+      --maroon-dark: #4c111b;
+      --gold: #c9a75d;
+      --gold-light: #e5cb8d;
+      --text-main: #1f1618;
+      --text-muted: #66585c;
+      --border-soft: #e7ddd6;
+      --danger-bg: #fef2f2;
+      --danger-text: #991b1b;
+      --danger-border: #fecaca;
+      --info-bg: #fffbeb;
+      --info-text: #92400e;
+      --info-border: #fde68a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body.login-page {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top right, rgba(201, 167, 93, 0.24), transparent 45%),
+        radial-gradient(circle at bottom left, rgba(113, 29, 43, 0.55), transparent 55%),
+        linear-gradient(155deg, #120609 0%, #2a0d14 55%, #16080c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-shell {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      background: var(--bg-card);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(201, 167, 93, 0.35);
+    }
+
+    .login-brand-panel {
+      background:
+        linear-gradient(160deg, rgba(113, 29, 43, 0.94), rgba(45, 10, 17, 0.97));
+      color: #fffdf9;
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .login-brand-panel::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(201, 167, 93, 0.32);
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(201, 167, 93, 0.18);
+      border: 1px solid rgba(201, 167, 93, 0.45);
+      color: var(--gold-light);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      width: fit-content;
+    }
+
+    .brand-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .brand-emblem {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold), #9d7b35);
+      color: #1e090d;
+      display: grid;
+      place-items: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 800;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      line-height: 1.2;
+      margin: 0;
+      color: #fffdf9;
+    }
+
+    .brand-subtitle {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: rgba(255, 253, 249, 0.82);
+    }
+
+    .brand-highlights {
+      margin-top: 28px;
+      display: grid;
+      gap: 12px;
+      font-size: 13px;
+      color: rgba(255, 253, 249, 0.9);
+    }
+
+    .brand-highlight-item {
+      background: rgba(255, 255, 255, 0.06);
+      border-left: 3px solid var(--gold);
+      padding: 10px 12px;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .login-form-panel {
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--bg-card);
+    }
+
+    .login-heading {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--maroon-dark);
+    }
+
+    .login-desc {
+      margin: 0 0 20px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border-soft);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #ffffff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--maroon);
+      box-shadow: 0 0 0 3px rgba(113, 29, 43, 0.12);
+    }
+
+    .password-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-toggle-pass {
+      padding: 11px 12px;
+      border: 1.5px solid var(--border-soft);
+      background: #faf6f2;
+      color: var(--maroon-dark);
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-toggle-pass:hover {
+      background: #f2e8df;
+    }
+
+    .helper-text {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .btn-login-submit {
+      width: 100%;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--maroon), var(--maroon-dark));
+      color: #fffdf9;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(113, 29, 43, 0.28);
+      transition: transform 0.15s, opacity 0.2s;
+    }
+
+    .btn-login-submit:hover {
+      transform: translateY(-1px);
+      opacity: 0.97;
+    }
+
+    .btn-login-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-box {
+      margin-bottom: 16px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      display: none;
+    }
+
+    .status-box.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+
+    .status-box.info {
+      display: block;
+      background: var(--info-bg);
+      color: var(--info-text);
+      border: 1px solid var(--info-border);
+    }
+
+    .rubric-box {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-soft);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .rubric-box strong {
+      color: var(--maroon-dark);
+    }
+
+    @media (max-width: 780px) {
+      body.login-page {
+        padding: 12px;
+        align-items: flex-start;
+      }
+
+      .login-shell {
+        grid-template-columns: 1fr;
+        border-radius: 16px;
+      }
+
+      .login-brand-panel {
+        padding: 24px 20px;
+      }
+
+      .brand-title {
+        font-size: 21px;
+      }
+
+      .brand-highlights {
+        margin-top: 16px;
+        gap: 8px;
+      }
+
+      .login-form-panel {
+        padding: 24px 20px;
+      }
+    }
+  </style>
 </head>
-<body class="login-body">
-  <main class="login-wrapper">
-    <section class="login-card">
-      <div class="login-brand">
-        <span class="brand-badge">SP-PPT • TEATER</span>
-        <h1>Sistem Penilaian Proyek Produksi Teater</h1>
-        <p class="login-subtitle">
-          Masuk menggunakan akun Admin, Guru Pengampu, Pimpinan Produksi, atau Siswa
-        </p>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-brand-panel">
+      <div>
+        <span class="brand-badge">SP-PPT • MANAJEMEN & PENILAIAN TEATER</span>
+        <div class="brand-logo-row">
+          <div class="brand-emblem" aria-hidden="true">PT</div>
+          <div>
+            <h1 class="brand-title">Produksi Teater</h1>
+            <p class="brand-subtitle">Portofolio Produksi, Kolaborasi &amp; Asesmen 360°</p>
+          </div>
+        </div>
+
+        <div class="brand-highlights">
+          <div class="brand-highlight-item">
+            <strong>Ruang Produksi Terpadu:</strong> Kelola naskah, jadwal latihan, presensi, bloking panggung, logistik, dan kas produksi.
+          </div>
+          <div class="brand-highlight-item">
+            <strong>Penilaian Transparan:</strong> Integrasi penilaian mandiri (<em>Self</em>), rekan sejawat (<em>Peer</em>), dan Guru Pengampu.
+          </div>
+        </div>
       </div>
 
-      <div id="loginErrorBox" class="alert alert-danger hidden" role="alert"></div>
+      <div class="brand-subtitle" style="margin-top: 24px;">
+        Akses khusus Admin, Guru Pengampu, Pimpinan Produksi, dan Siswa.
+      </div>
+    </section>
 
-      <form id="loginForm" class="form-stack" novalidate>
+    <section class="login-form-panel">
+      <h2 class="login-heading">Masuk ke Sistem</h2>
+      <p class="login-desc">Gunakan email atau username terdaftar beserta kata sandi akun Anda.</p>
+
+      <div id="loginStatus" class="status-box" role="alert"></div>
+
+      <form id="loginForm" novalidate>
         <div class="form-group">
-          <label for="loginIdentifier">Username atau Email <span class="required">*</span></label>
+          <label for="loginIdentifier">Username atau Email *</label>
           <input
-            type="text"
             id="loginIdentifier"
-            placeholder="Contoh: admin atau guru01@sekolah.sch.id"
+            name="identifier"
+            type="text"
+            class="form-control"
+            placeholder="Contoh: nama@sekolah.sch.id atau username"
             autocomplete="username"
             required
           />
-          <span class="field-hint">
-            Akun versi lama tetap dapat masuk menggunakan username dan kata sandi lama.
+          <span class="helper-text">
+            Akun lama yang menggunakan username dan kata sandi tetap didukung selama sudah terdaftar di sistem.
           </span>
         </div>
 
         <div class="form-group">
-          <label for="loginPassword">Kata Sandi <span class="required">*</span></label>
-          <div class="password-input-wrap">
+          <label for="loginPassword">Kata Sandi *</label>
+          <div class="password-row">
             <input
-              type="password"
               id="loginPassword"
+              name="password"
+              type="password"
+              class="form-control"
               placeholder="Masukkan kata sandi"
               autocomplete="current-password"
               required
             />
-            <button type="button" id="togglePwdBtn" class="btn-icon-inline">Tampilkan</button>
+            <button type="button" id="togglePasswordBtn" class="btn-toggle-pass">Tampilkan</button>
           </div>
         </div>
 
-        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
-          Masuk ke Sistem
-        </button>
+        <button type="submit" id="loginSubmitBtn" class="btn-login-submit">Masuk ke Sistem</button>
       </form>
 
-      <div class="login-footer">
-        <p>Rubrik Penilaian 360°: <strong>Self 15% • Peer 25% • Teacher 60%</strong></p>
-        <p>Aspek: Disiplin, Kolaborasi, Kualitas, Tanggung Jawab</p>
+      <div id="rubricSummary" class="rubric-box">
+        <strong>Rubrik Penilaian 360°:</strong> Self 15% • Peer 25% • Teacher 60%<br />
+        <strong>Aspek Penilaian:</strong> Disiplin, Kolaborasi, Kualitas, Tanggung Jawab
       </div>
     </section>
   </main>
 
-  <script type="module">
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      auth,
-      loginWithIdentifier,
-      getUserProfileByUid,
-      getDashboardUrlByRole,
-      showLoader,
-      showToast
-    } from "./js/app.js";
+  <script src="js/app.js?v=3"></script>
+  <script>
+    (function () {
+      const form = document.getElementById("loginForm");
+      const identifierInput = document.getElementById("loginIdentifier");
+      const passwordInput = document.getElementById("loginPassword");
+      const toggleBtn = document.getElementById("togglePasswordBtn");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+      const statusBox = document.getElementById("loginStatus");
 
-    const loginForm = document.getElementById("loginForm");
-    const identifierInput = document.getElementById("loginIdentifier");
-    const passwordInput = document.getElementById("loginPassword");
-    const togglePwdBtn = document.getElementById("togglePwdBtn");
-    const submitBtn = document.getElementById("loginSubmitBtn");
-    const errorBox = document.getElementById("loginErrorBox");
+      function showMessage(type, message) {
+        statusBox.className = "status-box " + type;
+        statusBox.textContent = message;
+      }
 
-    let isSubmitting = false;
+      function clearMessage() {
+        statusBox.className = "status-box";
+        statusBox.textContent = "";
+      }
 
-    onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser && !isSubmitting) {
+      toggleBtn.addEventListener("click", function () {
+        const isHidden = passwordInput.type === "password";
+        passwordInput.type = isHidden ? "text" : "password";
+        toggleBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
+      });
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearMessage();
+
+        const identifier = (identifierInput.value || "").trim();
+        const password = passwordInput.value || "";
+
+        if (!identifier || !password) {
+          showMessage("error", "Harap isi username/email dan kata sandi terlebih dahulu.");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Memeriksa akun...";
+
         try {
-          const profile = await getUserProfileByUid(fbUser.uid);
-          if (profile && profile.status !== "SUSPENDED" && profile.active !== false) {
-            window.location.replace(getDashboardUrlByRole(profile.role));
+          if (typeof window.SPPPTLogin === "function") {
+            await window.SPPPTLogin(identifier, password);
+          } else if (typeof window.loginUser === "function") {
+            await window.loginUser(identifier, password);
+          } else {
+            showMessage(
+              "info",
+              "Koneksi modul autentikasi (js/app.js) belum merespons. Pastikan file js/app.js sudah ter-upload dan memuat skrip Firebase."
+            );
           }
         } catch (err) {
-          console.warn("Pemeriksaan sesi awal:", err);
+          const rawMsg = (err && err.message) ? err.message : "Gagal masuk ke sistem.";
+          if (rawMsg.toLowerCase().includes("profil") || rawMsg.toLowerCase().includes("not found")) {
+            showMessage(
+              "info",
+              "Akun terautentikasi tetapi profil pengguna belum terdaftar di database. Silakan minta Admin menambahkan/menyinkronkan profil akun Anda."
+            );
+          } else {
+            showMessage("error", rawMsg);
+          }
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Masuk ke Sistem";
         }
-      }
-    });
-
-    togglePwdBtn.addEventListener("click", () => {
-      const isHidden = passwordInput.type === "password";
-      passwordInput.type = isHidden ? "text" : "password";
-      togglePwdBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
-    });
-
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (isSubmitting) return;
-
-      errorBox.classList.add("hidden");
-      const identifier = identifierInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!identifier || !password) {
-        errorBox.textContent = "Harap isi Username/Email dan Kata Sandi terlebih dahulu.";
-        errorBox.classList.remove("hidden");
-        return;
-      }
-
-      isSubmitting = true;
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Memverifikasi Akun...";
-      showLoader(true, "Menghubungkan ke server autentikasi...");
-
-      try {
-        const profile = await loginWithIdentifier(identifier, password);
-        showToast(`Selamat datang, ${profile.name}!`, "success");
-        setTimeout(() => {
-          window.location.replace(getDashboardUrlByRole(profile.role));
-        }, 350);
-      } catch (err) {
-        errorBox.textContent = err.message || "Gagal masuk ke sistem.";
-        errorBox.classList.remove("hidden");
-        showToast(err.message || "Login gagal.", "danger");
-      } finally {
-        isSubmitting = false;
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Masuk ke Sistem";
-        showLoader(false);
-      }
-    });
+      });
+    })();
   </script>
 </body>
 </html>
