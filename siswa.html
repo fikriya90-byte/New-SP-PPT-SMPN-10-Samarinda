@@ -1,0 +1,2799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruang Produksi Siswa — Sistem Penilaian Proyek Produksi Teater</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <span class="brand-pill">PRODUKSI TEATER</span>
+        <div>
+          <h1 class="topbar-title" id="topbarProjectTitle">Ruang Kerja Produksi Teater</h1>
+          <p class="topbar-subtitle" id="topbarGroupSubtitle">Memuat identitas kelompok & divisi...</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-chip">
+          <span id="studentAvatarTopbar"></span>
+          <span class="user-name" id="studentNameDisplay">Memuat...</span>
+          <span class="badge badge-student" id="studentRoleBadge">SISWA</span>
+        </div>
+        <button type="button" id="btnPrintStudent" class="btn btn-outline btn-sm">Cetak / PDF</button>
+        <button type="button" id="btnLogout" class="btn btn-danger-outline btn-sm">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="announcementsBanner" class="form-stack no-print" style="margin-bottom: 14px;"></div>
+
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Tahap Produksi Aktif</span>
+        <strong class="kpi-value" id="kpiActiveStage" style="font-size:17px;">Persiapan</strong>
+        <span class="kpi-note" id="kpiStageDeadline">Jadwal belum ditetapkan</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Progres Tugas Kelompok</span>
+        <strong class="kpi-value" id="kpiTaskProgress">0%</strong>
+        <div class="progress-track"><div class="progress-fill" id="kpiTaskBar" style="width: 0%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Kehadiran Latihan Saya</span>
+        <strong class="kpi-value" id="kpiMyAttendance">100%</strong>
+        <span class="kpi-note" id="kpiMyAttendanceNote">0 sesi latihan tercatat</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Nilai Akhir 360° Saya</span>
+        <strong class="kpi-value" id="kpiMyFinalScore">0.00</strong>
+        <span class="kpi-note" id="kpiMyPredikat">Menunggu penilaian</span>
+      </div>
+    </section>
+
+    <nav class="tab-nav no-print" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="tabWorkboard">Tugas, Timeline & Deadline</button>
+      <button type="button" class="tab-btn" data-tab="tabCrew">Kerabat Kerja & Presensi Latihan</button>
+      <button type="button" class="tab-btn" data-tab="tabStudio">Studio Teater & Bloking Panggung</button>
+      <button type="button" class="tab-btn" data-tab="tabDocs">Dokumen (.docx), Inventaris & Kas</button>
+      <button type="button" class="tab-btn" data-tab="tabAssessment360">Penilaian 360°, Rapor & E-Program</button>
+    </nav>
+
+    <!-- ====================================================================
+         TAB 1: TUGAS, TIMELINE & DEADLINE
+         ==================================================================== -->
+    <section id="tabWorkboard" class="tab-pane">
+      <div class="panel-card" id="myDivisionFocusCard" style="border-left: 4px solid var(--primary);">
+        <div class="panel-header" style="margin-bottom: 0;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+              <span class="badge badge-admin" id="myDivCategoryBadge">DIVISI PRODUKSI</span>
+              <strong style="font-size:15px;" id="myDivTitleDisplay">Jabatan Produksi Anda</strong>
+            </div>
+            <p class="panel-desc" id="myDivTupoksiDisplay">Memuat tugas pokok & fungsi divisi Anda...</p>
+          </div>
+          <div class="action-group">
+            <span class="badge badge-info" id="myDivTaskCountBadge">0 Tugas Divisi Anda</span>
+            <button type="button" id="btnFilterMyDivisionTasks" class="btn btn-outline btn-xs">
+              Fokus Tugas Divisi Saya
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card" id="groupIdentityCard">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <img id="groupLogoImg" src="" alt="Logo Kelompok" class="group-logo hidden" />
+            <div>
+              <h2 id="groupTitleBanner">Identitas Proyek Kelompok</h2>
+              <p class="panel-desc" id="groupSynopsisBanner">Sinopsis pementasan kelompok akan tampil di sini.</p>
+            </div>
+          </div>
+          <div class="action-group no-print">
+            <button type="button" id="btnEditGroupIdentity" class="btn btn-outline btn-sm hidden">
+              Edit Identitas & Logo
+            </button>
+            <button type="button" id="btnOpenAddTask" class="btn btn-primary btn-sm hidden">
+              + Tambah Tugas Tim
+            </button>
+          </div>
+        </div>
+
+        <div id="studentStagesTimeline" class="summary-strip"></div>
+
+        <div class="filter-bar no-print">
+          <div class="filter-item">
+            <label for="filterStudentTaskDeadline">Filter Status & Tenggat</label>
+            <select id="filterStudentTaskDeadline">
+              <option value="ALL">Semua Tugas Kelompok</option>
+              <option value="MY_DIVISION">Khusus Tugas Divisi & Saya Sendiri</option>
+              <option value="URGENT">Terlambat & Mendesak (H-3)</option>
+              <option value="PENDING">Belum Selesai (TODO / PROSES)</option>
+              <option value="DONE">Sudah Selesai (Tuntas)</option>
+            </select>
+          </div>
+          <div class="filter-item filter-search">
+            <label for="filterStudentTaskSearch">Cari Tugas / Divisi / PIC</label>
+            <input type="search" id="filterStudentTaskSearch" placeholder="Ketik kata kunci tugas..." />
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tugas / Milestone</th>
+                <th>Tahap</th>
+                <th>Penanggung Jawab / Divisi</th>
+                <th>Tenggat Waktu (Deadline)</th>
+                <th>Status</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="studentTasksBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 2: KERABAT KERJA & PRESENSI LATIHAN HARIAN
+         ==================================================================== -->
+    <section id="tabCrew" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Direktori Kerabat Kerja & Struktur Tim Produksi</h2>
+            <p class="panel-desc" id="crewSummarySubtitle">Memuat susunan pimpinan produksi, tim artistik, dan kontak pembimbing...</p>
+          </div>
+          <div class="action-group no-print">
+            <button type="button" id="btnOpenAttendanceModal" class="btn btn-primary btn-sm hidden">
+              + Catat Presensi Latihan
+            </button>
+            <button type="button" id="btnToggleMemberPhotos" class="btn btn-outline btn-sm hidden">
+              Sembunyikan / Tampilkan Foto
+            </button>
+          </div>
+        </div>
+
+        <div id="teacherContactBox" class="alert alert-info"></div>
+
+        <div class="filter-bar no-print">
+          <div class="filter-item">
+            <label for="filterCrewCategory">Filter Bidang Divisi</label>
+            <select id="filterCrewCategory">
+              <option value="ALL">Semua Kerabat Kerja</option>
+              <option value="NON_ARTISTIK">Tim Non-Artistik (Manajemen)</option>
+              <option value="ARTISTIK">Tim Artistik & Panggung</option>
+            </select>
+          </div>
+          <div class="filter-item filter-search">
+            <label for="filterCrewSearch">Cari Nama / Jabatan / Tupoksi</label>
+            <input type="search" id="filterCrewSearch" placeholder="Ketik nama anggota atau divisi..." />
+          </div>
+        </div>
+
+        <div id="crewCardsGrid" class="cards-grid-3"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Riwayat Sesi & Kehadiran Latihan Kelompok</h2>
+            <p class="panel-desc">Persentase kehadiran otomatis terhubung ke template DOC-09 dan menjadi acuan penilaian aspek Disiplin.</p>
+          </div>
+        </div>
+        <div id="attendanceSessionsList" class="form-stack"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 3: STUDIO TEATER & BLOKING PANGGUNG
+         ==================================================================== -->
+    <section id="tabStudio" class="tab-pane hidden">
+      <div class="sub-tab-nav no-print">
+        <button type="button" class="sub-tab-btn active" data-sub="subScript">Editor Naskah & Ulasan Guru</button>
+        <button type="button" class="sub-tab-btn" data-sub="subBlocking">Kanvas Bloking Panggung (9 Zona)</button>
+        <button type="button" class="sub-tab-btn" data-sub="subReferences">Referensi Musik & Video</button>
+        <button type="button" class="sub-tab-btn" data-sub="subVocal">Latihan Vokal & 10 Langkah Dialog</button>
+        <button type="button" class="sub-tab-btn" data-sub="subQuickChange">Simulasi Quick Change</button>
+      </div>
+
+      <!-- SUB-TAB NASKAH -->
+      <div id="subScript" class="sub-pane panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Editor & Pembaca Naskah Produksi</h2>
+            <p class="panel-desc">Tulis atau perbarui naskah lakon kelompok Anda dan pantau status persetujuan Guru Pengampu.</p>
+          </div>
+          <button type="button" id="btnGenerateOutline" class="btn btn-outline btn-sm">
+            Buat Kerangka Naskah 3 Babak
+          </button>
+        </div>
+
+        <div id="scriptAccessNotice" class="alert alert-warning hidden"></div>
+        <div id="scriptTeacherReviewBox" class="alert alert-info hidden"></div>
+
+        <form id="scriptForm" class="form-stack">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="scriptTitleInput">Judul Naskah Lakon <span class="required">*</span></label>
+              <input type="text" id="scriptTitleInput" placeholder="Contoh: Ayahku Pulang" required />
+            </div>
+            <div class="form-group">
+              <label for="scriptAuthorInput">Penulis / Penyadur Naskah</label>
+              <input type="text" id="scriptAuthorInput" placeholder="Nama penulis naskah atau adaptasi tim" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="scriptContentInput">Isi Naskah & Petunjuk Lakuan (Kramagung)</label>
+            <textarea id="scriptContentInput" rows="12" style="font-family: 'Courier New', monospace;" placeholder="BABAK I&#10;ADEGAN 1&#10;(Lampu perlahan menyala...)"></textarea>
+          </div>
+          <button type="submit" id="btnSaveScript" class="btn btn-primary">Simpan Naskah ke Cloud</button>
+        </form>
+      </div>
+
+      <!-- SUB-TAB KANVAS BLOKING PANGGUNG 9 ZONA -->
+      <div id="subBlocking" class="sub-pane panel-card hidden">
+        <div class="panel-header">
+          <div>
+            <h2>Kanvas Tata Panggung & Bloking Aktor (9 Zona Standar Teater)</h2>
+            <p class="panel-desc">Rancang posisi pemeran dan tata letak properti tiap babak/adegan untuk panduan latihan dan kru panggung.</p>
+          </div>
+          <div class="filter-item" style="max-width:220px;">
+            <label for="blockingSceneFilter">Pilih Babak / Adegan</label>
+            <select id="blockingSceneFilter">
+              <option value="Babak I - Adegan 1">Babak I - Adegan 1</option>
+              <option value="Babak I - Adegan 2">Babak I - Adegan 2</option>
+              <option value="Babak II - Adegan 1">Babak II - Adegan 1</option>
+              <option value="Babak II - Adegan 2">Babak II - Adegan 2</option>
+              <option value="Babak III - Klimaks">Babak III - Klimaks</option>
+              <option value="Curtain Call">Curtain Call (Penutup)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="blockingAccessNotice" class="alert alert-warning hidden"></div>
+
+        <form id="blockingPinForm" class="filter-bar">
+          <div class="filter-item" style="max-width:160px;">
+            <label for="pinZoneSelect">Zona Panggung</label>
+            <select id="pinZoneSelect"></select>
+          </div>
+          <div class="filter-item" style="max-width:140px;">
+            <label for="pinTypeSelect">Jenis Penanda</label>
+            <select id="pinTypeSelect">
+              <option value="ACTOR">Aktor / Pemeran</option>
+              <option value="PROP">Properti / Set</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="pinLabelInput">Nama Tokoh / Properti <span class="required">*</span></label>
+            <input type="text" id="pinLabelInput" placeholder="Contoh: Ayah / Meja Kayu" required />
+          </div>
+          <div class="filter-item">
+            <label for="pinNoteInput">Arah Gerak / Keterangan</label>
+            <input type="text" id="pinNoteInput" placeholder="Contoh: Masuk dari sayap kiri" />
+          </div>
+          <div class="filter-item filter-btn-wrap">
+            <button type="submit" id="btnAddBlockingPin" class="btn btn-primary btn-sm">+ Tambah ke Panggung</button>
+          </div>
+        </form>
+
+        <div class="stage-planner-wrap">
+          <div class="stage-back-label">BACKSTAGE / LAYAR BELAKANG (UPSTAGE)</div>
+          <div id="stageGrid9" class="stage-grid-9"></div>
+          <div class="stage-audience-bar">ARAH PENONTON (AUDIENCE / DOWNSTAGE)</div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB REFERENSI -->
+      <div id="subReferences" class="sub-pane panel-card hidden">
+        <div class="panel-header">
+          <div>
+            <h2>Pustaka Referensi Audio, Musik & Pementasan</h2>
+            <p class="panel-desc">Referensi yang dibagikan Guru Pengampu untuk memperkaya konsep garap.</p>
+          </div>
+        </div>
+        <div id="studentReferencesList" class="cards-grid-2"></div>
+      </div>
+
+      <!-- SUB-TAB VOKAL & 10 LANGKAH -->
+      <div id="subVocal" class="sub-pane panel-card hidden">
+        <div class="cards-grid-2">
+          <div>
+            <h2>Perekam Latihan Vokal & Artikulasi</h2>
+            <p class="panel-desc" style="margin-bottom:12px;">Rekam latihan dialog Anda menggunakan mikrofon perangkat untuk mengevaluasi kejelasan intonasi.</p>
+            <div class="action-group" style="margin-bottom:12px;">
+              <button type="button" id="btnStartRec" class="btn btn-danger btn-sm">Mulai Rekam Suara</button>
+              <button type="button" id="btnStopRec" class="btn btn-outline btn-sm" disabled>Hentikan Rekaman</button>
+            </div>
+            <p id="recStatusText" class="field-hint">Status: Siap merekam.</p>
+            <audio id="vocalAudioPreview" controls class="hidden" style="width:100%;margin-top:10px;"></audio>
+          </div>
+
+          <div>
+            <h2>10 Langkah Penguasaan Dialog Teater</h2>
+            <ul class="rubric-list" id="dialogueStepsList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB QUICK CHANGE -->
+      <div id="subQuickChange" class="sub-pane panel-card hidden">
+        <div class="panel-header">
+          <div>
+            <h2>Timer Simulasi Quick Change (Pergantian Kostum & Set)</h2>
+            <p class="panel-desc">Uji kecepatan tim tata rias, kostum, dan kru panggung saat perpindahan adegan.</p>
+          </div>
+        </div>
+        <div class="form-row-2" style="max-width:520px;">
+          <div class="form-group">
+            <label for="qcSecondsInput">Target Durasi (Detik)</label>
+            <input type="number" id="qcSecondsInput" value="45" min="5" max="600" />
+          </div>
+          <div class="form-group" style="justify-content:flex-end;">
+            <div class="action-group">
+              <button type="button" id="btnQcStart" class="btn btn-primary btn-sm">Mulai Hitung Mundur</button>
+              <button type="button" id="btnQcReset" class="btn btn-outline btn-sm">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div id="qcTimerDisplay" class="timer-display" style="max-width:520px;margin-top:14px;">00:45</div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 4: 10 TEMPLATE DOKUMEN (.DOCX), INVENTARIS PROPERTI & BUKU KAS
+         ==================================================================== -->
+    <section id="tabDocs" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>10 Template Dokumen Produksi Teater (Ekspor Word .docx)</h2>
+            <p class="panel-desc">Isi dokumen sesuai divisi Anda. Template bertanda <strong>Divisi Anda</strong> dapat disunting dan disimpan ke Guru Pengampu.</p>
+          </div>
+        </div>
+        <div id="templatesCardsGrid" class="cards-grid-3"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Manajemen Inventaris Properti, Set & Kostum</h2>
+            <p class="panel-desc">Data yang dicatat di sini otomatis terisi saat Anda membuka template DOC-06 (Daftar Inventaris).</p>
+          </div>
+        </div>
+
+        <div id="inventoryAccessNotice" class="alert alert-warning hidden"></div>
+
+        <form id="inventoryForm" class="filter-bar">
+          <div class="filter-item" style="max-width:120px;">
+            <label for="invCodeInput">Kode Barang</label>
+            <input type="text" id="invCodeInput" placeholder="PRP-01" />
+          </div>
+          <div class="filter-item">
+            <label for="invNameInput">Nama Properti / Kostum <span class="required">*</span></label>
+            <input type="text" id="invNameInput" placeholder="Contoh: Koper kulit tua" required />
+          </div>
+          <div class="filter-item">
+            <label for="invSceneInput">Tokoh / Adegan</label>
+            <input type="text" id="invSceneInput" placeholder="Contoh: Tokoh Ayah (Babak II)" />
+          </div>
+          <div class="filter-item" style="max-width:110px;">
+            <label for="invQtyInput">Jumlah</label>
+            <input type="text" id="invQtyInput" value="1 buah" />
+          </div>
+          <div class="filter-item">
+            <label for="invSourceInput">Sumber Pengadaan</label>
+            <input type="text" id="invSourceInput" placeholder="Inventaris / Sewa / Pribadi" />
+          </div>
+          <div class="filter-item">
+            <label for="invStatusSelect">Status Kesiapan</label>
+            <select id="invStatusSelect">
+              <option value="Siap Pentas">Siap Pentas</option>
+              <option value="Dalam Proses">Dalam Proses</option>
+              <option value="Belum Ada">Belum Ada</option>
+            </select>
+          </div>
+          <div class="filter-item filter-btn-wrap">
+            <button type="submit" id="btnAddInventory" class="btn btn-primary btn-sm">+ Tambah Barang</button>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama Properti / Kostum</th>
+                <th>Tokoh / Adegan</th>
+                <th>Jumlah</th>
+                <th>Sumber</th>
+                <th>Status</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Buku Kas & Realisasi Keuangan Produksi</h2>
+            <p class="panel-desc">Pencatatan arus kas pemasukan dan pengeluaran riil masing-masing divisi produksi.</p>
+          </div>
+        </div>
+
+        <div id="financeAccessNotice" class="alert alert-warning hidden"></div>
+
+        <div class="kpi-grid kpi-grid-3">
+          <div class="kpi-card" style="border-top-color:var(--success);">
+            <span class="kpi-label">Total Pemasukan Kas</span>
+            <strong class="kpi-value text-success" id="finTotalIn">Rp 0</strong>
+          </div>
+          <div class="kpi-card" style="border-top-color:var(--danger);">
+            <span class="kpi-label">Total Pengeluaran Riil</span>
+            <strong class="kpi-value text-danger" id="finTotalOut">Rp 0</strong>
+          </div>
+          <div class="kpi-card" style="border-top-color:var(--info);">
+            <span class="kpi-label">Sisa Saldo Kas Produksi</span>
+            <strong class="kpi-value" id="finBalance">Rp 0</strong>
+          </div>
+        </div>
+
+        <form id="financeForm" class="filter-bar">
+          <div class="filter-item" style="max-width:150px;">
+            <label for="finDateInput">Tanggal</label>
+            <input type="date" id="finDateInput" required />
+          </div>
+          <div class="filter-item" style="max-width:150px;">
+            <label for="finTypeSelect">Jenis Transaksi</label>
+            <select id="finTypeSelect">
+              <option value="IN">Pemasukan (+)</option>
+              <option value="OUT">Pengeluaran (-)</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="finDivInput">Divisi Terkait</label>
+            <input type="text" id="finDivInput" placeholder="Contoh: Kostum & Tata Rias" />
+          </div>
+          <div class="filter-item">
+            <label for="finDescInput">Uraian Transaksi <span class="required">*</span></label>
+            <input type="text" id="finDescInput" placeholder="Contoh: Iuran kas anggota / Beli properti" required />
+          </div>
+          <div class="filter-item" style="max-width:160px;">
+            <label for="finAmountInput">Nominal (Rp) <span class="required">*</span></label>
+            <input type="number" id="finAmountInput" min="1" placeholder="50000" required />
+          </div>
+          <div class="filter-item filter-btn-wrap">
+            <button type="submit" id="btnAddFinance" class="btn btn-primary btn-sm">+ Catat Transaksi</button>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Jenis</th>
+                <th>Divisi</th>
+                <th>Uraian Transaksi</th>
+                <th class="num">Nominal</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="financeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Portal 12 Folder Arsip Google Drive</h2>
+            <p class="panel-desc">Akses folder penyimpanan resmi produksi teater kelas.</p>
+          </div>
+        </div>
+        <div id="studentDriveLinks" class="cards-grid-3"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 5: PENILAIAN 360°, RAPOR INDIVIDU, E-PROGRAM & PROFIL
+         ==================================================================== -->
+    <section id="tabAssessment360" class="tab-pane hidden">
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Penilaian Diri Sendiri (Self Assessment — 15%)</h2>
+              <p class="panel-desc">Evaluasi kontribusi, kedisiplinan, dan kualitas kerja Anda secara jujur.</p>
+            </div>
+          </div>
+          <form id="selfAssessForm" class="form-stack">
+            <div id="selfAssessAspects" class="form-stack"></div>
+            <div class="form-group">
+              <label for="selfReflectionInput">Refleksi Proses Belajar</label>
+              <textarea id="selfReflectionInput" rows="2" placeholder="Apa tantangan terbesar Anda selama produksi teater ini?"></textarea>
+            </div>
+            <button type="submit" id="btnSaveSelfAssess" class="btn btn-primary">Simpan Penilaian Diri</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Penilaian Rekan Satu Kelompok (Peer — 25%)</h2>
+              <p class="panel-desc">Berikan penilaian objektif untuk rekan tim Anda.</p>
+            </div>
+          </div>
+          <form id="peerAssessForm" class="form-stack">
+            <div class="form-group">
+              <label for="peerTargetSelect">Pilih Rekan Kelompok <span class="required">*</span></label>
+              <select id="peerTargetSelect" required><option value="">-- Pilih Anggota Kelompok --</option></select>
+            </div>
+            <div id="peerAssessAspects" class="form-stack"></div>
+            <button type="submit" id="btnSavePeerAssess" class="btn btn-primary">Kirim Penilaian Rekan</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Grafik Perbandingan 360° & Kartu Rapor Individu</h2>
+              <p class="panel-desc">Perbandingan skor Self, Peer, Guru, serta unduh Rapor Evaluasi Individu (.docx).</p>
+            </div>
+            <button type="button" id="btnDownloadMyRaporDocx" class="btn btn-primary btn-sm">
+              Unduh Rapor Saya (.DOCX)
+            </button>
+          </div>
+          <div id="myScoreComparisonChart" class="score-bars-chart"></div>
+          <div id="teacherFeedbackCard" class="alert alert-info" style="margin-top:14px;margin-bottom:0;">
+            Belum ada catatan evaluasi dari Guru Pengampu.
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Buku Acara Pementasan (E-Program) & Apresiasi Penonton</h2>
+              <p class="panel-desc">Unduh Buku Acara resmi pementasan kelompok (.docx) dan catat kesan penonton.</p>
+            </div>
+            <button type="button" id="btnDownloadEProgramDocx" class="btn btn-success btn-sm">
+              Unduh E-Program (.DOCX)
+            </button>
+          </div>
+
+          <form id="audienceFeedbackForm" class="subform-box" style="margin-bottom:12px;">
+            <strong>Buku Tamu & Apresiasi Penonton</strong>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="audNameInput">Nama Penonton / Tamu <span class="required">*</span></label>
+                <input type="text" id="audNameInput" placeholder="Contoh: Ibu Rina / Siswa XI IPA 2" required />
+              </div>
+              <div class="form-group">
+                <label for="audRatingSelect">Rating Pementasan</label>
+                <select id="audRatingSelect">
+                  <option value="5">★★★★★ (5/5 - Luar Biasa)</option>
+                  <option value="4">★★★★☆ (4/5 - Sangat Baik)</option>
+                  <option value="3">★★★☆☆ (3/5 - Baik)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="audCommentInput">Kesan & Pesan Apresiasi <span class="required">*</span></label>
+              <input type="text" id="audCommentInput" placeholder="Tuliskan kesan Anda terhadap akting, tata panggung, dan cerita..." required />
+            </div>
+            <button type="submit" id="btnSaveAudience" class="btn btn-outline btn-xs">Kirim Apresiasi Penonton</button>
+          </form>
+
+          <div id="audienceFeedbackList" class="form-stack"></div>
+        </div>
+      </div>
+
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Profil, Foto & Kontak Pribadi Siswa</h2>
+              <p class="panel-desc">Lengkapi nomor WhatsApp, jabatan produksi, serta foto profil untuk E-Program.</p>
+            </div>
+          </div>
+          <form id="studentProfileForm" class="form-stack">
+            <div class="subform-box" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div id="studentAvatarPreviewWrap"></div>
+                <div>
+                  <strong style="font-size:13px;">Foto Profil Anda</strong>
+                  <div class="field-hint">Tampil pada direktori kerabat kerja & Buku Acara</div>
+                </div>
+              </div>
+              <div class="action-group">
+                <label class="btn btn-outline btn-xs" style="cursor:pointer;margin:0;">
+                  Unggah Foto
+                  <input type="file" id="studentAvatarFileInput" accept="image/*" class="hidden" />
+                </label>
+                <button type="button" id="btnRemoveStudentAvatar" class="btn btn-danger-outline btn-xs hidden">Hapus Foto</button>
+              </div>
+            </div>
+            <input type="hidden" id="removeStudentAvatarFlag" value="false" />
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="stuProfileName">Nama Lengkap</label>
+                <input type="text" id="stuProfileName" required />
+              </div>
+              <div class="form-group">
+                <label for="stuProfileWa">No. WhatsApp</label>
+                <input type="text" id="stuProfileWa" placeholder="0812..." />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="stuProfileRole">Jabatan / Divisi Produksi</label>
+              <select id="stuProfileRole"></select>
+            </div>
+            <button type="submit" id="btnSaveStudentProfile" class="btn btn-primary">Simpan Profil Saya</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Keamanan Akun & Ganti Kata Sandi</h2>
+              <p class="panel-desc">Perbarui kata sandi akun Anda secara mandiri.</p>
+            </div>
+          </div>
+          <form id="studentPasswordForm" class="form-stack">
+            <div class="form-group">
+              <label for="stuNewPassword">Kata Sandi Baru <span class="required">*</span></label>
+              <input type="password" id="stuNewPassword" minlength="6" placeholder="Minimal 6 karakter" required />
+            </div>
+            <div class="form-group">
+              <label for="stuConfirmPassword">Konfirmasi Kata Sandi Baru <span class="required">*</span></label>
+              <input type="password" id="stuConfirmPassword" minlength="6" placeholder="Ulangi kata sandi baru" required />
+            </div>
+            <button type="submit" id="btnChangeStuPwd" class="btn btn-outline">Perbarui Kata Sandi</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL EDIT IDENTITAS & LOGO KELOMPOK (KHUSUS LEADER) -->
+  <div id="groupIdentityModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3>Identitas & Logo Kelompok</h3>
+          <p class="modal-subtitle">Kelola profil sanggar dan logo pementasan kelompok</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="groupIdentityModal">&times;</button>
+      </div>
+      <form id="groupIdentityForm" class="form-stack">
+        <div class="form-group">
+          <label for="editGrpName">Nama Kelompok / Sanggar <span class="required">*</span></label>
+          <input type="text" id="editGrpName" required />
+        </div>
+        <div class="form-group">
+          <label for="editGrpTitle">Judul Lakon Teater <span class="required">*</span></label>
+          <input type="text" id="editGrpTitle" required />
+        </div>
+        <div class="form-group">
+          <label for="editGrpSynopsis">Sinopsis Singkat</label>
+          <textarea id="editGrpSynopsis" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editGrpLogoFile">Unggah Logo Kelompok (JPG/PNG)</label>
+          <input type="file" id="editGrpLogoFile" accept="image/*" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="groupIdentityModal">Batal</button>
+          <button type="submit" id="btnSaveGroupIdentity" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / UBAH TUGAS & DEADLINE (KHUSUS LEADER) -->
+  <div id="taskModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 id="taskModalTitle">Tambah Tugas Kelompok</h3>
+          <p class="modal-subtitle">Tentukan penanggung jawab dan tenggat waktu tugas</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="taskModal">&times;</button>
+      </div>
+      <form id="taskForm" class="form-stack">
+        <input type="hidden" id="editTaskDocId" />
+        <div class="form-group">
+          <label for="taskTitleInput">Judul Tugas <span class="required">*</span></label>
+          <input type="text" id="taskTitleInput" placeholder="Contoh: Pembuatan Properti Meja Klasik" required />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="taskStageInput">Tahapan</label>
+            <select id="taskStageInput">
+              <option value="PERSIAPAN">1. Persiapan</option>
+              <option value="PELAKSANAAN">2. Pelaksanaan</option>
+              <option value="PERTUNJUKAN">3. Pertunjukan</option>
+              <option value="PASCA">4. Pasca-Produksi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="taskDeadlineInput">Tenggat Waktu (Deadline) <span class="required">*</span></label>
+            <input type="date" id="taskDeadlineInput" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="taskAssigneeInput">Penanggung Jawab</label>
+          <select id="taskAssigneeInput"><option value="">Semua Anggota Tim</option></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="taskModal">Batal</button>
+          <button type="submit" id="btnSaveTask" class="btn btn-primary">Simpan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CATAT PRESENSI LATIHAN HARIAN -->
+  <div id="attendanceModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>Catat Presensi Latihan Kelompok</h3>
+          <p class="modal-subtitle">Rekap ini otomatis mengisi template DOC-09 dan menjadi acuan nilai Disiplin Guru</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="attendanceModal">&times;</button>
+      </div>
+      <form id="attendanceForm" class="form-stack modal-body-scroll">
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="attDateInput">Tanggal Latihan <span class="required">*</span></label>
+            <input type="date" id="attDateInput" required />
+          </div>
+          <div class="form-group">
+            <label for="attTimeInput">Waktu Latihan</label>
+            <input type="text" id="attTimeInput" placeholder="15.00 - 17.00" value="15.00 - 17.00" />
+          </div>
+          <div class="form-group">
+            <label for="attTopicInput">Agenda / Materi Latihan <span class="required">*</span></label>
+            <input type="text" id="attTopicInput" placeholder="Bloking Babak I & II" required />
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Kerabat Kerja</th>
+                <th>Jabatan / Divisi</th>
+                <th>Status Kehadiran</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceMemberRows"></tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="attendanceModal">Batal</button>
+          <button type="submit" id="btnSaveAttendance" class="btn btn-primary">Simpan Presensi Latihan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PENGISIAN TEMPLATE DOKUMEN & EKSPOR .DOCX -->
+  <div id="templateFillModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="tplModalTitle">Isi Dokumen Produksi</h3>
+          <p class="modal-subtitle" id="tplAutoSaveStatus">Draf otomatis tersimpan secara lokal</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="templateFillModal">&times;</button>
+      </div>
+
+      <div class="form-stack modal-body-scroll">
+        <div id="tplRolePermissionAlert" class="alert alert-info"></div>
+
+        <div class="subform-box">
+          <strong>Identitas Kop & Lembar Pengesahan Dokumen</strong>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="tplMetaSchool">Nama Sekolah / Sanggar</label>
+              <input type="text" id="tplMetaSchool" placeholder="SMA Negeri ... / Teater ..." />
+            </div>
+            <div class="form-group">
+              <label for="tplMetaDocNum">Nomor Dokumen</label>
+              <input type="text" id="tplMetaDocNum" placeholder="DOC-01/2026" />
+            </div>
+            <div class="form-group">
+              <label for="tplMetaDate">Tanggal Pelaksanaan / Pentas</label>
+              <input type="text" id="tplMetaDate" placeholder="20 November 2026" />
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="tplMetaVenue">Tempat / Gedung Pementasan</label>
+              <input type="text" id="tplMetaVenue" placeholder="Aula Pertunjukan Sekolah" />
+            </div>
+            <div class="form-group">
+              <label for="tplMetaLeader">Nama Pimpinan Produksi</label>
+              <input type="text" id="tplMetaLeader" />
+            </div>
+            <div class="form-group">
+              <label for="tplMetaTeacher">Nama Guru Pengampu</label>
+              <input type="text" id="tplMetaTeacher" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="tplIntroInput">Ringkasan / Deskripsi Pengantar Dokumen</label>
+            <textarea id="tplIntroInput" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <button type="button" id="btnAddTplRow" class="btn btn-outline btn-xs">+ Tambah Baris</button>
+          <button type="button" id="btnFillSampleRows" class="btn btn-outline btn-xs">Muat Contoh Isian</button>
+          <span id="tplLiveGrandTotalBadge" class="badge badge-admin hidden" style="margin-left:auto;font-size:12px;">
+            Total Anggaran: Rp 0
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead id="tplTableHead"></thead>
+            <tbody id="tplTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="form-group">
+          <label for="tplNotesInput">Catatan Tambahan / Lampiran</label>
+          <textarea id="tplNotesInput" rows="2" placeholder="Catatan tambahan atau tautan referensi..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close="templateFillModal">Tutup</button>
+        <button type="button" id="btnDownloadDocx" class="btn btn-success">Unduh Word (.docx)</button>
+        <button type="button" id="btnSubmitDocToTeacher" class="btn btn-primary">Simpan & Kirim ke Guru</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      COLS,
+      RUBRIC_ASPECTS,
+      PRODUCTION_STAGES,
+      THEATRE_ROLES,
+      STAGE_ZONES,
+      DOC_TEMPLATES,
+      DIALOGUE_10_STEPS,
+      getRoleMetadata,
+      getDivisionPermissions,
+      computeMemberAttendance,
+      requireAuthRole,
+      logoutUser,
+      fetchAllCollection,
+      saveDocument,
+      removeDocument,
+      getRubricWeights,
+      getDriveFolders,
+      calculateAspectAverage,
+      computeStudent360Summary,
+      exportProductionDocx,
+      exportIndividualReportDocx,
+      exportEProgramDocx,
+      compressImageFile,
+      renderAvatarHtml,
+      parseNumericValue,
+      formatRupiah,
+      getDeadlineStatus,
+      formatIndoDate,
+      buildWaReminderUrl,
+      changeOwnPassword,
+      confirmDialog,
+      showLoader,
+      showToast,
+      escapeHtml
+    } from "./js/app.js";
+
+    let currentUser = null;
+    let isLeader = false;
+    let perms = null;
+    let state = {
+      users: [],
+      classes: [],
+      groups: [],
+      tasks: [],
+      assessments: [],
+      stages: [],
+      scripts: [],
+      references: [],
+      submissions: [],
+      broadcasts: [],
+      attendance: [],
+      blocking: [],
+      inventory: [],
+      finance: [],
+      audience: [],
+      weights: { self: 15, peer: 25, teacher: 60 },
+      driveFolders: []
+    };
+
+    let activeTemplate = null;
+    let activeTemplateRows = [];
+    let autoSaveInterval = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let qcTimerInterval = null;
+    let qcRemaining = 45;
+
+    requireAuthRole(["LEADER", "STUDENT"], async (profile) => {
+      currentUser = profile;
+      perms = getDivisionPermissions(profile);
+      isLeader = perms.isLeader;
+
+      document.getElementById("studentNameDisplay").textContent = profile.name;
+      document.getElementById("studentAvatarTopbar").innerHTML = renderAvatarHtml(profile, 28);
+      const badge = document.getElementById("studentRoleBadge");
+      badge.textContent = isLeader ? "PIMPINAN PRODUKSI" : (profile.roleId || "ANGGOTA");
+      badge.className = `badge ${isLeader ? "badge-leader" : "badge-student"}`;
+
+      if (perms.canManageGroup) {
+        document.getElementById("btnEditGroupIdentity").classList.remove("hidden");
+        document.getElementById("btnOpenAddTask").classList.remove("hidden");
+        document.getElementById("btnToggleMemberPhotos").classList.remove("hidden");
+      }
+      if (perms.canManageAttendance) {
+        document.getElementById("btnOpenAttendanceModal").classList.remove("hidden");
+      }
+
+      populateStaticSelects();
+      bindEvents();
+      await loadStudentWorkspace();
+    });
+
+    function getMyGroup() {
+      return state.groups.find((g) => (g.id || g.docId) === currentUser.groupId) || null;
+    }
+
+    function getGroupMembers() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId || currentUser.groupId;
+      if (!gId) return [currentUser];
+      return state.users.filter((u) => u.groupId === gId && (u.role === "LEADER" || u.role === "STUDENT"));
+    }
+
+    function getGroupAttendanceSessions() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) return [];
+      return state.attendance
+        .filter((a) => a.groupId === gId)
+        .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    }
+
+    async function loadStudentWorkspace() {
+      showLoader(true, "Memuat ruang kerja produksi teater...");
+      try {
+        const [
+          users, classes, groups, tasks, assessments, stages, scripts, references,
+          submissions, broadcasts, attendance, blocking, inventory, finance, audience,
+          weights, driveFolders
+        ] = await Promise.all([
+          fetchAllCollection(COLS.USERS),
+          fetchAllCollection(COLS.CLASSES),
+          fetchAllCollection(COLS.GROUPS),
+          fetchAllCollection(COLS.TASKS),
+          fetchAllCollection(COLS.ASSESSMENTS),
+          fetchAllCollection(COLS.STAGES),
+          fetchAllCollection(COLS.SCRIPTS),
+          fetchAllCollection(COLS.REFERENCES),
+          fetchAllCollection(COLS.SUBMISSIONS),
+          fetchAllCollection(COLS.BROADCASTS),
+          fetchAllCollection(COLS.ATTENDANCE),
+          fetchAllCollection(COLS.BLOCKING),
+          fetchAllCollection(COLS.INVENTORY),
+          fetchAllCollection(COLS.FINANCE),
+          fetchAllCollection(COLS.AUDIENCE),
+          getRubricWeights(),
+          getDriveFolders()
+        ]);
+
+        state = {
+          users, classes, groups, tasks, assessments, stages, scripts, references,
+          submissions, broadcasts, attendance, blocking, inventory, finance, audience,
+          weights, driveFolders
+        };
+        renderHeaderAndAnnouncements();
+        renderKpis();
+        renderWorkboard();
+        renderCrewAndAttendanceTab();
+        renderStudioTab();
+        renderDocsAndFinanceTab();
+        renderAssessment360Tab();
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal memuat ruang produksi: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function populateStaticSelects() {
+      document.getElementById("stuProfileRole").innerHTML = THEATRE_ROLES
+        .map((r) => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`)
+        .join("");
+
+      document.getElementById("pinZoneSelect").innerHTML = STAGE_ZONES
+        .map((z) => `<option value="${escapeHtml(z.key)}">${escapeHtml(z.code)} — ${escapeHtml(z.label)}</option>`)
+        .join("");
+
+      document.getElementById("dialogueStepsList").innerHTML = DIALOGUE_10_STEPS
+        .map((step) => `<li><p style="margin:0;color:var(--text);">${escapeHtml(step)}</p></li>`)
+        .join("");
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      document.getElementById("finDateInput").value = todayStr;
+      document.getElementById("attDateInput").value = todayStr;
+    }
+
+    function bindEvents() {
+      document.getElementById("btnLogout").addEventListener("click", logoutUser);
+      document.getElementById("btnPrintStudent").addEventListener("click", () => window.print());
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-pane").forEach((p) => p.classList.add("hidden"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.tab).classList.remove("hidden");
+        });
+      });
+
+      document.querySelectorAll(".sub-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".sub-tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".sub-pane").forEach((p) => p.classList.add("hidden"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.sub).classList.remove("hidden");
+        });
+      });
+
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const modalId = btn.dataset.close;
+          document.getElementById(modalId).classList.add("hidden");
+          if (modalId === "templateFillModal" && autoSaveInterval) {
+            clearInterval(autoSaveInterval);
+          }
+        });
+      });
+
+      document.getElementById("filterStudentTaskDeadline").addEventListener("change", renderWorkboard);
+      document.getElementById("filterStudentTaskSearch").addEventListener("input", renderWorkboard);
+      document.getElementById("btnFilterMyDivisionTasks").addEventListener("click", () => {
+        const sel = document.getElementById("filterStudentTaskDeadline");
+        sel.value = sel.value === "MY_DIVISION" ? "ALL" : "MY_DIVISION";
+        document.getElementById("btnFilterMyDivisionTasks").textContent =
+          sel.value === "MY_DIVISION" ? "Tampilkan Semua Tugas" : "Fokus Tugas Divisi Saya";
+        renderWorkboard();
+      });
+
+      document.getElementById("filterCrewCategory").addEventListener("change", renderCrewAndAttendanceTab);
+      document.getElementById("filterCrewSearch").addEventListener("input", renderCrewAndAttendanceTab);
+
+      document.getElementById("btnOpenAddTask").addEventListener("click", () => openTaskModal(null));
+      document.getElementById("taskForm").addEventListener("submit", handleSaveTask);
+      document.getElementById("btnEditGroupIdentity").addEventListener("click", openGroupIdentityModal);
+      document.getElementById("groupIdentityForm").addEventListener("submit", handleSaveGroupIdentity);
+      document.getElementById("btnToggleMemberPhotos").addEventListener("click", handleToggleMemberPhotos);
+
+      document.getElementById("btnOpenAttendanceModal").addEventListener("click", openAttendanceModal);
+      document.getElementById("attendanceForm").addEventListener("submit", handleSaveAttendance);
+
+      document.getElementById("scriptForm").addEventListener("submit", handleSaveScript);
+      document.getElementById("btnGenerateOutline").addEventListener("click", () => {
+        const area = document.getElementById("scriptContentInput");
+        if (area.value.trim() && !confirm("Tambahkan kerangka 3 babak di bawah teks yang sudah ada?")) return;
+        area.value += `\n\n=== BABAK I: EKSPOZISI & PENGENALAN KONFLIK ===\nADEGAN 1\n(Setting panggung: ...)\nTOKOH A: ...\nTOKOH B: ...\n\n=== BABAK II: KOMPLIKASI & KLIMAKS ===\nADEGAN 1\n(Ketegangan meningkat...)\n\n=== BABAK III: RESOLUSI & PENUTUP ===\nADEGAN 1\n(Penyelesaian konflik & lampu meredup/blackout)`;
+      });
+
+      document.getElementById("blockingSceneFilter").addEventListener("change", renderStageBlockingGrid);
+      document.getElementById("blockingPinForm").addEventListener("submit", handleAddBlockingPin);
+
+      document.getElementById("inventoryForm").addEventListener("submit", handleAddInventory);
+      document.getElementById("financeForm").addEventListener("submit", handleAddFinance);
+
+      document.getElementById("btnStartRec").addEventListener("click", startVocalRecording);
+      document.getElementById("btnStopRec").addEventListener("click", stopVocalRecording);
+      document.getElementById("btnQcStart").addEventListener("click", startQuickChangeTimer);
+      document.getElementById("btnQcReset").addEventListener("click", resetQuickChangeTimer);
+
+      document.getElementById("btnAddTplRow").addEventListener("click", () => {
+        if (!activeTemplate) return;
+        const newRow = activeTemplate.columns.map(() => "");
+        if (activeTemplate.calcConfig) {
+          newRow[activeTemplate.calcConfig.qtyCol] = "1";
+          newRow[activeTemplate.calcConfig.priceCol] = "0";
+          newRow[activeTemplate.calcConfig.totalCol] = "0";
+        }
+        activeTemplateRows.push(newRow);
+        renderTemplateFillRows();
+      });
+      document.getElementById("btnFillSampleRows").addEventListener("click", () => {
+        if (!activeTemplate) return;
+        activeTemplateRows = activeTemplate.sampleRows.map((r) => [...r]);
+        renderTemplateFillRows();
+        showToast("Contoh isian template berhasil dimuat.", "info");
+      });
+      document.getElementById("btnDownloadDocx").addEventListener("click", () => handleExportOrSubmitDoc(false));
+      document.getElementById("btnSubmitDocToTeacher").addEventListener("click", () => handleExportOrSubmitDoc(true));
+
+      document.getElementById("selfAssessForm").addEventListener("submit", handleSaveSelfAssess);
+      document.getElementById("peerAssessForm").addEventListener("submit", handleSavePeerAssess);
+      document.getElementById("studentProfileForm").addEventListener("submit", handleSaveStudentProfile);
+      document.getElementById("studentPasswordForm").addEventListener("submit", handleChangeStudentPassword);
+      document.getElementById("audienceFeedbackForm").addEventListener("submit", handleSaveAudienceFeedback);
+
+      document.getElementById("btnDownloadMyRaporDocx").addEventListener("click", handleDownloadMyRapor);
+      document.getElementById("btnDownloadEProgramDocx").addEventListener("click", handleDownloadEProgram);
+
+      document.getElementById("studentAvatarFileInput").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const dataUrl = await compressImageFile(file, 280, 0.72);
+          document.getElementById("removeStudentAvatarFlag").value = "false";
+          document.getElementById("studentAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: currentUser.name, avatarUrl: dataUrl }, 48);
+          document.getElementById("btnRemoveStudentAvatar").classList.remove("hidden");
+        } catch (err) {
+          showToast(err.message, "warning");
+        }
+      });
+
+      document.getElementById("btnRemoveStudentAvatar").addEventListener("click", () => {
+        document.getElementById("studentAvatarFileInput").value = "";
+        document.getElementById("removeStudentAvatarFlag").value = "true";
+        document.getElementById("studentAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: currentUser.name, avatarUrl: "" }, 48);
+        document.getElementById("btnRemoveStudentAvatar").classList.add("hidden");
+      });
+    }
+
+    function renderHeaderAndAnnouncements() {
+      const grp = getMyGroup();
+      const cls = state.classes.find((c) => (c.id || c.docId) === (grp?.classId || currentUser.classId));
+
+      document.getElementById("topbarProjectTitle").textContent = grp
+        ? `${grp.name} — "${grp.title}"`
+        : "Ruang Kerja Produksi Teater";
+      document.getElementById("topbarGroupSubtitle").textContent =
+        `${cls ? cls.name : "Kelas Teater"} • Divisi: ${currentUser.roleId || "Tim Produksi"}`;
+
+      const relevantBc = state.broadcasts
+        .filter((b) => !b.targetClassIds?.length || b.targetClassIds.includes(currentUser.classId))
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+        .slice(0, 3);
+
+      document.getElementById("announcementsBanner").innerHTML = relevantBc.map((b) => `
+        <div class="alert alert-info" style="margin-bottom:0;">
+          <strong>Pengumuman (${escapeHtml(b.senderName || "Guru")}): ${escapeHtml(b.title)}</strong>
+          <p style="margin:4px 0 0;">${escapeHtml(b.message)}</p>
+          ${b.linkUrl ? `<a href="${escapeHtml(b.linkUrl)}" target="_blank" rel="noopener">Buka Tautan Lampiran</a>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderKpis() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const activeStage = state.stages.find((s) => s.isActive);
+      const stageInfo = PRODUCTION_STAGES.find((x) => x.key === (activeStage?.stage || "PERSIAPAN")) || PRODUCTION_STAGES[0];
+      const stageDl = getDeadlineStatus(activeStage?.endDate, false);
+
+      document.getElementById("kpiActiveStage").textContent = stageInfo.label;
+      document.getElementById("kpiStageDeadline").innerHTML = activeStage?.endDate
+        ? `Batas: ${escapeHtml(formatIndoDate(activeStage.endDate))} <span class="badge ${stageDl.badgeClass}">${escapeHtml(stageDl.label)}</span>`
+        : "Jadwal tahap belum diatur Admin";
+
+      const myTasks = state.tasks.filter((t) => t.groupId === gId);
+      const doneTasks = myTasks.filter((t) => t.status === "DONE").length;
+      const pct = myTasks.length ? Math.round((doneTasks / myTasks.length) * 100) : 0;
+
+      document.getElementById("kpiTaskProgress").textContent = `${pct}% (${doneTasks}/${myTasks.length})`;
+      document.getElementById("kpiTaskBar").style.width = `${pct}%`;
+
+      const att = computeMemberAttendance(currentUser, getGroupAttendanceSessions());
+      document.getElementById("kpiMyAttendance").textContent = `${att.percentage}%`;
+      document.getElementById("kpiMyAttendanceNote").textContent =
+        att.totalSessions > 0
+          ? `Hadir ${att.present} • Telat ${att.late} • Izin ${att.excused} • Alpa ${att.absent}`
+          : "Belum ada sesi presensi tercatat";
+
+      const mySummary = computeStudent360Summary(currentUser, state.assessments, state.weights);
+      document.getElementById("kpiMyFinalScore").textContent = mySummary.finalScore.toFixed(2);
+      document.getElementById("kpiMyPredikat").textContent = mySummary.predikat;
+    }
+
+    // ========================================================================
+    // TAB 1: WORKBOARD, TIMELINE & DEADLINE
+    // ========================================================================
+    function renderWorkboard() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const myRoleMeta = getRoleMetadata(currentUser.roleId, currentUser.role);
+      const myUserIds = new Set([currentUser.id, currentUser.docId, currentUser.authUid].filter(Boolean));
+
+      document.getElementById("myDivCategoryBadge").textContent = myRoleMeta.categoryLabel;
+      document.getElementById("myDivTitleDisplay").textContent =
+        `Peran Anda: ${currentUser.roleId || (isLeader ? "Pimpinan Produksi" : "Anggota Produksi")}`;
+      document.getElementById("myDivTupoksiDisplay").textContent = myRoleMeta.tupoksi;
+
+      const allGroupTasks = state.tasks.filter((t) => t.groupId === gId);
+      const isTaskForMyDiv = (t) =>
+        (currentUser.roleId && t.roleId === currentUser.roleId) || myUserIds.has(t.assigneeId);
+
+      const myDivTasksCount = allGroupTasks.filter(isTaskForMyDiv).length;
+      document.getElementById("myDivTaskCountBadge").textContent = `${myDivTasksCount} Tugas Divisi Anda`;
+
+      if (grp) {
+        document.getElementById("groupTitleBanner").textContent = `${grp.name} — "${grp.title}"`;
+        document.getElementById("groupSynopsisBanner").textContent = grp.synopsis || "Belum ada sinopsis produksi.";
+        const logoImg = document.getElementById("groupLogoImg");
+        if (grp.logoUrl) {
+          logoImg.src = grp.logoUrl;
+          logoImg.classList.remove("hidden");
+        } else {
+          logoImg.classList.add("hidden");
+        }
+      }
+
+      const timelineEl = document.getElementById("studentStagesTimeline");
+      timelineEl.innerHTML = PRODUCTION_STAGES.map((st) => {
+        const saved = state.stages.find((x) => x.stage === st.key || x.docId === st.key) || {};
+        const dl = getDeadlineStatus(saved.endDate, false);
+        return `
+          <div class="mini-summary-card ${saved.isActive ? "stage-highlight" : ""}">
+            <div class="mini-summary-head">
+              <strong style="font-size:12px;">${escapeHtml(st.label)}</strong>
+              <span class="badge ${saved.isActive ? "badge-success" : "badge-neutral"}">${saved.isActive ? "AKTIF" : "Tahap"}</span>
+            </div>
+            <div class="mini-summary-sub">
+              ${escapeHtml(formatIndoDate(saved.startDate))} s.d. <strong>${escapeHtml(formatIndoDate(saved.endDate))}</strong>
+            </div>
+            ${saved.endDate ? `<div style="margin-top:4px;"><span class="badge ${dl.badgeClass}">${escapeHtml(dl.label)}</span></div>` : ""}
+          </div>
+        `;
+      }).join("");
+
+      const filterMode = document.getElementById("filterStudentTaskDeadline").value;
+      const searchQ = document.getElementById("filterStudentTaskSearch").value.trim().toLowerCase();
+
+      const tasks = allGroupTasks
+        .filter((t) => {
+          const dl = getDeadlineStatus(t.deadline, t.status === "DONE");
+          if (filterMode === "MY_DIVISION") return isTaskForMyDiv(t);
+          if (filterMode === "URGENT") return dl.isOverdue || dl.isUrgent;
+          if (filterMode === "PENDING") return t.status !== "DONE";
+          if (filterMode === "DONE") return t.status === "DONE";
+          return true;
+        })
+        .filter((t) => {
+          if (!searchQ) return true;
+          const hay = `${t.title} ${t.roleId || ""} ${t.stage || ""}`.toLowerCase();
+          return hay.includes(searchQ);
+        })
+        .sort((a, b) => {
+          const da = getDeadlineStatus(a.deadline, a.status === "DONE");
+          const db = getDeadlineStatus(b.deadline, b.status === "DONE");
+          return da.sortOrder - db.sortOrder || da.daysDiff - db.daysDiff;
+        });
+
+      const tbody = document.getElementById("studentTasksBody");
+
+      if (!tasks.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada daftar tugas yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = tasks.map((t) => {
+        const pic = state.users.find((u) => (u.id || u.docId) === t.assigneeId);
+        const dl = getDeadlineStatus(t.deadline, t.status === "DONE");
+        const badgeCls = t.status === "DONE" ? "badge-success" : t.status === "IN_PROGRESS" ? "badge-info" : "badge-warning";
+        const mineFlag = isTaskForMyDiv(t);
+        const waUrl = isLeader && pic && t.status !== "DONE"
+          ? buildWaReminderUrl(pic.whatsapp, pic.name, t.title, t.deadline, grp?.name || "")
+          : "";
+
+        return `
+          <tr class="${dl.isOverdue ? "row-overdue" : ""}">
+            <td>
+              <strong>${escapeHtml(t.title)}</strong>
+              ${mineFlag ? `<span class="badge badge-purple" style="margin-left:6px;">Divisi Anda</span>` : ""}
+            </td>
+            <td><span class="badge badge-neutral">${escapeHtml(t.stage || "PERSIAPAN")}</span></td>
+            <td>${escapeHtml(pic ? pic.name : (t.roleId || "Semua Anggota"))}</td>
+            <td>
+              ${escapeHtml(formatIndoDate(t.deadline))}
+              <div style="margin-top:3px;"><span class="badge ${dl.badgeClass}">${escapeHtml(dl.label)}</span></div>
+            </td>
+            <td><span class="badge ${badgeCls}">${escapeHtml(t.status || "TODO")}</span></td>
+            <td class="actions-col">
+              <div class="action-group">
+                <select class="btn-xs" data-task-status="${escapeHtml(t.docId)}">
+                  <option value="TODO" ${t.status === "TODO" ? "selected" : ""}>TODO</option>
+                  <option value="IN_PROGRESS" ${t.status === "IN_PROGRESS" ? "selected" : ""}>PROSES</option>
+                  <option value="DONE" ${t.status === "DONE" ? "selected" : ""}>SELESAI</option>
+                </select>
+                ${isLeader ? `<button type="button" class="btn btn-outline btn-xs" data-edit-task="${escapeHtml(t.docId)}">Ubah</button>` : ""}
+                ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="btn btn-warning btn-xs">WA</a>` : ""}
+                ${isLeader ? `<button type="button" class="btn btn-danger-outline btn-xs" data-del-task="${escapeHtml(t.docId)}">&times;</button>` : ""}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll("[data-task-status]").forEach((sel) => {
+        sel.addEventListener("change", async () => {
+          try {
+            await saveDocument(COLS.TASKS, sel.dataset.taskStatus, { status: sel.value });
+            showToast("Status tugas diperbarui.", "success");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal mengubah status: " + err.message, "danger");
+          }
+        });
+      });
+
+      tbody.querySelectorAll("[data-edit-task]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const t = state.tasks.find((x) => x.docId === btn.dataset.editTask);
+          if (t) openTaskModal(t);
+        });
+      });
+
+      tbody.querySelectorAll("[data-del-task]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ok = await confirmDialog("Hapus Tugas", "Yakin ingin menghapus tugas ini?");
+          if (!ok) return;
+          try {
+            await removeDocument(COLS.TASKS, btn.dataset.delTask);
+            showToast("Tugas berhasil dihapus.", "success");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal menghapus tugas: " + err.message, "danger");
+          }
+        });
+      });
+    }
+
+    function openTaskModal(taskObj) {
+      const members = getGroupMembers();
+      document.getElementById("taskAssigneeInput").innerHTML =
+        `<option value="">Semua Anggota Tim</option>` +
+        members.map((m) => `<option value="${escapeHtml(m.id || m.docId)}">${escapeHtml(m.name)} (${escapeHtml(m.roleId || m.role)})</option>`).join("");
+
+      const isEdit = Boolean(taskObj);
+      document.getElementById("taskModalTitle").textContent = isEdit ? "Ubah Tugas & Tenggat" : "Tambah Tugas Kelompok";
+      document.getElementById("editTaskDocId").value = isEdit ? taskObj.docId : "";
+      document.getElementById("taskTitleInput").value = isEdit ? (taskObj.title || "") : "";
+      document.getElementById("taskStageInput").value = isEdit ? (taskObj.stage || "PERSIAPAN") : "PERSIAPAN";
+      document.getElementById("taskDeadlineInput").value = isEdit ? (taskObj.deadline || "") : "";
+      document.getElementById("taskAssigneeInput").value = isEdit ? (taskObj.assigneeId || "") : "";
+      document.getElementById("taskModal").classList.remove("hidden");
+    }
+
+    async function handleSaveTask(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      if (!grp) {
+        showToast("Anda belum tergabung dalam kelompok.", "warning");
+        return;
+      }
+
+      const editDocId = document.getElementById("editTaskDocId").value;
+      const title = document.getElementById("taskTitleInput").value.trim();
+      const stage = document.getElementById("taskStageInput").value;
+      const deadline = document.getElementById("taskDeadlineInput").value;
+      const assigneeId = document.getElementById("taskAssigneeInput").value;
+
+      if (!title || !deadline) {
+        showToast("Judul tugas dan tenggat waktu wajib diisi.", "warning");
+        return;
+      }
+
+      const assignee = state.users.find((u) => (u.id || u.docId) === assigneeId);
+      const docId = editDocId || `task_${Date.now()}`;
+      const btn = document.getElementById("btnSaveTask");
+      btn.disabled = true;
+      try {
+        const payload = {
+          id: docId,
+          title,
+          stage,
+          classId: grp.classId || currentUser.classId || "",
+          groupId: grp.id || grp.docId,
+          assigneeId,
+          roleId: assignee?.roleId || "",
+          deadline
+        };
+        if (!editDocId) payload.status = "TODO";
+        await saveDocument(COLS.TASKS, docId, payload);
+        document.getElementById("taskModal").classList.add("hidden");
+        showToast(editDocId ? "Tugas berhasil diperbarui." : "Tugas baru ditambahkan.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan tugas: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function openGroupIdentityModal() {
+      const grp = getMyGroup();
+      if (!grp) return;
+      document.getElementById("editGrpName").value = grp.name || "";
+      document.getElementById("editGrpTitle").value = grp.title || "";
+      document.getElementById("editGrpSynopsis").value = grp.synopsis || "";
+      document.getElementById("groupIdentityModal").classList.remove("hidden");
+    }
+
+    async function handleSaveGroupIdentity(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      if (!grp) return;
+
+      const name = document.getElementById("editGrpName").value.trim();
+      const title = document.getElementById("editGrpTitle").value.trim();
+      const synopsis = document.getElementById("editGrpSynopsis").value.trim();
+      const file = document.getElementById("editGrpLogoFile").files[0];
+
+      const btn = document.getElementById("btnSaveGroupIdentity");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan identitas kelompok...");
+      try {
+        const updates = { name, title, synopsis };
+        if (file) {
+          updates.logoUrl = await compressImageFile(file, 360, 0.75);
+        }
+        await saveDocument(COLS.GROUPS, grp.docId, updates);
+        document.getElementById("groupIdentityModal").classList.add("hidden");
+        showToast("Identitas kelompok diperbarui.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleToggleMemberPhotos() {
+      const grp = getMyGroup();
+      if (!grp) return;
+      const nextVal = grp.showMemberPhotos === false;
+      try {
+        await saveDocument(COLS.GROUPS, grp.docId, { showMemberPhotos: nextVal });
+        showToast(nextVal ? "Foto anggota ditampilkan." : "Foto anggota disembunyikan.", "info");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal mengubah pengaturan foto: " + err.message, "danger");
+      }
+    }
+
+    // ========================================================================
+    // TAB 2: KERABAT KERJA LENGKAP & PRESENSI LATIHAN HARIAN
+    // ========================================================================
+    function renderCrewAndAttendanceTab() {
+      const grp = getMyGroup();
+      const teacher = state.users.find((u) => (u.id || u.docId) === grp?.teacherId);
+      const teacherWaClean = String(teacher?.whatsapp || "").replace(/^0/, "62").replace(/[^0-9]/g, "");
+
+      document.getElementById("teacherContactBox").innerHTML = teacher
+        ? `<strong>Guru Pembimbing & Penilai:</strong> ${escapeHtml(teacher.name)} ` +
+          (teacherWaClean
+            ? `• <a href="https://wa.me/${teacherWaClean}" target="_blank" rel="noopener">Hubungi via WhatsApp (${escapeHtml(teacher.whatsapp)})</a>`
+            : "• Nomor WhatsApp belum dilengkapi Guru")
+        : "Guru pembimbing kelompok belum ditetapkan oleh Admin.";
+
+      const allMembers = getGroupMembers();
+      const sessions = getGroupAttendanceSessions();
+      const nonArtCount = allMembers.filter((m) => getRoleMetadata(m.roleId, m.role).category === "NON_ARTISTIK").length;
+      const artCount = allMembers.length - nonArtCount;
+
+      document.getElementById("crewSummarySubtitle").textContent =
+        `Total ${allMembers.length} Personel (${nonArtCount} Non-Artistik / Manajemen • ${artCount} Artistik & Panggung)`;
+
+      const catFilter = document.getElementById("filterCrewCategory").value;
+      const q = document.getElementById("filterCrewSearch").value.trim().toLowerCase();
+
+      const filteredMembers = allMembers
+        .filter((m) => {
+          const meta = getRoleMetadata(m.roleId, m.role);
+          if (catFilter !== "ALL" && meta.category !== catFilter) return false;
+          if (q) {
+            const hay = `${m.name} ${m.roleId || ""} ${m.nis || ""} ${meta.tupoksi}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => (a.role === "LEADER" ? -1 : b.role === "LEADER" ? 1 : 0));
+
+      const showPhotos = grp?.showMemberPhotos !== false;
+      const grid = document.getElementById("crewCardsGrid");
+
+      grid.innerHTML = filteredMembers.length
+        ? filteredMembers.map((m) => {
+            const mId = m.id || m.docId;
+            const isMemberLeader = m.role === "LEADER" || m.roleId === "Pimpinan Produksi";
+            const meta = getRoleMetadata(m.roleId, m.role);
+            const att = computeMemberAttendance(m, sessions);
+            const memberTasks = state.tasks.filter((t) => t.groupId === (grp?.id || grp?.docId) && t.assigneeId === mId);
+            const doneTasks = memberTasks.filter((t) => t.status === "DONE").length;
+            const waClean = String(m.whatsapp || "").replace(/^0/, "62").replace(/[^0-9]/g, "");
+
+            const roleControlHtml = perms.canManageGroup
+              ? `<select class="btn-xs" data-assign-role="${escapeHtml(m.docId)}" style="margin-top:6px;">
+                  ${THEATRE_ROLES.map((r) => `<option value="${escapeHtml(r)}" ${m.roleId === r ? "selected" : ""}>${escapeHtml(r)}</option>`).join("")}
+                </select>`
+              : "";
+
+            return `
+              <div class="crew-card ${isMemberLeader ? "crew-leader" : ""}">
+                <div>
+                  <div class="crew-card-top">
+                    ${renderAvatarHtml(m, 46, showPhotos)}
+                    <div style="flex:1;min-width:0;">
+                      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px;flex-wrap:wrap;">
+                        <strong style="font-size:14px;">${escapeHtml(m.name)}</strong>
+                        <span class="badge ${isMemberLeader ? "badge-leader" : "badge-neutral"}">
+                          ${isMemberLeader ? "Pimpinan Produksi" : escapeHtml(meta.categoryLabel)}
+                        </span>
+                      </div>
+                      <div style="font-size:12px;font-weight:600;color:var(--primary);margin-top:2px;">
+                        ${escapeHtml(m.roleId || (isMemberLeader ? "Pimpinan Produksi" : "Anggota Produksi"))}
+                      </div>
+                      <div class="field-hint">NIS: ${escapeHtml(m.nis || "-")}</div>
+                      ${roleControlHtml}
+                    </div>
+                  </div>
+
+                  <div class="crew-tupoksi" style="margin-top:10px;">
+                    <strong>Tugas Pokok:</strong> ${escapeHtml(meta.tupoksi)}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="crew-metrics">
+                    <div>
+                      <span class="field-hint">Kehadiran Latihan</span><br>
+                      <strong>${att.percentage}%</strong> (${att.present}/${att.totalSessions} sesi)
+                    </div>
+                    <div>
+                      <span class="field-hint">Tugas Individu</span><br>
+                      <strong>${doneTasks}/${memberTasks.length}</strong> Tuntas
+                    </div>
+                  </div>
+                  <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <span class="field-hint">${escapeHtml(m.whatsapp || "No. WA belum diisi")}</span>
+                    ${waClean ? `<a href="https://wa.me/${waClean}" target="_blank" rel="noopener" class="btn btn-outline btn-xs">Chat WA</a>` : ""}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<div class="empty-state">Tidak ada kerabat kerja yang sesuai dengan filter pencarian.</div>`;
+
+      grid.querySelectorAll("[data-assign-role]").forEach((sel) => {
+        sel.addEventListener("change", async () => {
+          try {
+            await saveDocument(COLS.USERS, sel.dataset.assignRole, { roleId: sel.value });
+            showToast("Jabatan divisi anggota diperbarui.", "success");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal memperbarui jabatan: " + err.message, "danger");
+          }
+        });
+      });
+
+      const sessContainer = document.getElementById("attendanceSessionsList");
+      sessContainer.innerHTML = sessions.length
+        ? sessions.map((sess) => {
+            const recs = sess.records || {};
+            const vals = Object.values(recs);
+            const hCount = vals.filter((v) => v === "HADIR").length;
+            const tCount = vals.filter((v) => v === "TERLAMBAT").length;
+            const iCount = vals.filter((v) => v === "IZIN").length;
+            const aCount = vals.filter((v) => v === "ALPA").length;
+
+            return `
+              <div class="mini-summary-card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div>
+                  <strong>${escapeHtml(formatIndoDate(sess.date))} (${escapeHtml(sess.time || "-")}) — ${escapeHtml(sess.topic)}</strong>
+                  <div class="mini-summary-sub">
+                    Hadir: <strong>${hCount}</strong> • Terlambat: <strong>${tCount}</strong> • Izin: <strong>${iCount}</strong> • Alpa: <strong>${aCount}</strong>
+                  </div>
+                </div>
+                ${perms.canManageAttendance ? `<button type="button" class="btn btn-danger-outline btn-xs" data-del-att="${escapeHtml(sess.docId)}">Hapus Sesi</button>` : ""}
+              </div>
+            `;
+          }).join("")
+        : `<p class="text-muted">Belum ada catatan sesi presensi latihan kelompok.</p>`;
+
+      sessContainer.querySelectorAll("[data-del-att]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ok = await confirmDialog("Hapus Sesi Presensi", "Hapus catatan presensi latihan ini?");
+          if (!ok) return;
+          try {
+            await removeDocument(COLS.ATTENDANCE, btn.dataset.delAtt);
+            showToast("Sesi presensi dihapus.", "success");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal menghapus sesi: " + err.message, "danger");
+          }
+        });
+      });
+    }
+
+    function openAttendanceModal() {
+      const members = getGroupMembers();
+      document.getElementById("attendanceMemberRows").innerHTML = members.map((m, idx) => {
+        const mId = m.id || m.docId;
+        return `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${escapeHtml(m.name)}</strong></td>
+            <td>${escapeHtml(m.roleId || m.role)}</td>
+            <td>
+              <select data-att-member="${escapeHtml(mId)}">
+                <option value="HADIR">Hadir Tepat Waktu</option>
+                <option value="TERLAMBAT">Terlambat</option>
+                <option value="IZIN">Izin / Sakit</option>
+                <option value="ALPA">Alpa (Tanpa Keterangan)</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      document.getElementById("attendanceModal").classList.remove("hidden");
+    }
+
+    async function handleSaveAttendance(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) {
+        showToast("Anda belum tergabung dalam kelompok.", "warning");
+        return;
+      }
+
+      const date = document.getElementById("attDateInput").value;
+      const time = document.getElementById("attTimeInput").value.trim();
+      const topic = document.getElementById("attTopicInput").value.trim();
+      if (!date || !topic) {
+        showToast("Tanggal dan agenda latihan wajib diisi.", "warning");
+        return;
+      }
+
+      const records = {};
+      document.querySelectorAll("[data-att-member]").forEach((sel) => {
+        records[sel.dataset.attMember] = sel.value;
+      });
+
+      const btn = document.getElementById("btnSaveAttendance");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan presensi latihan...");
+      try {
+        const docId = `att_${gId}_${Date.now()}`;
+        await saveDocument(COLS.ATTENDANCE, docId, {
+          id: docId,
+          classId: grp.classId || currentUser.classId || "",
+          groupId: gId,
+          date,
+          time,
+          topic,
+          records,
+          recordedBy: currentUser.name
+        });
+        document.getElementById("attendanceModal").classList.add("hidden");
+        showToast("Presensi latihan harian berhasil disimpan!", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan presensi: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    // ========================================================================
+    // TAB 3: STUDIO NASKAH (+ REVIEW GURU) & KANVAS BLOKING 9 ZONA
+    // ========================================================================
+    function renderStudioTab() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const myScript = state.scripts.find((s) => s.groupId === gId);
+
+      const scriptNotice = document.getElementById("scriptAccessNotice");
+      if (!perms.canEditScript) {
+        scriptNotice.innerHTML =
+          `<strong>Mode Baca Naskah (Read-Only):</strong> Penyuntingan naskah dikunci khusus untuk <strong>Sutradara, Asisten Sutradara, Penulis Naskah/Dramaturg,</strong> dan <strong>Pimpinan Produksi</strong> agar naskah utama tetap terjaga saat latihan.`;
+        scriptNotice.classList.remove("hidden");
+        document.getElementById("scriptTitleInput").disabled = true;
+        document.getElementById("scriptAuthorInput").disabled = true;
+        document.getElementById("scriptContentInput").disabled = true;
+        document.getElementById("btnGenerateOutline").classList.add("hidden");
+        document.getElementById("btnSaveScript").classList.add("hidden");
+      } else {
+        scriptNotice.classList.add("hidden");
+      }
+
+      if (myScript) {
+        document.getElementById("scriptTitleInput").value = myScript.title || "";
+        document.getElementById("scriptAuthorInput").value = myScript.author || "";
+        document.getElementById("scriptContentInput").value = myScript.content || "";
+
+        const revBox = document.getElementById("scriptTeacherReviewBox");
+        if (myScript.reviewStatus || myScript.teacherFeedback) {
+          const st = myScript.reviewStatus || "DRAFT";
+          revBox.className = `alert ${st === "DISETUJUI" ? "alert-success" : st === "PERLU_REVISI" ? "alert-warning" : "alert-info"}`;
+          revBox.innerHTML =
+            `<strong>Status Naskah dari Guru Pengampu: ${escapeHtml(st)}</strong><br>` +
+            `Catatan Dramaturgi Guru: ${escapeHtml(myScript.teacherFeedback || "Belum ada catatan tambahan.")}`;
+          revBox.classList.remove("hidden");
+        }
+      }
+
+      renderStageBlockingGrid();
+
+      const refs = state.references.filter((r) => !r.classId || r.classId === currentUser.classId);
+      document.getElementById("studentReferencesList").innerHTML = refs.length
+        ? refs.map((r) => `
+            <div class="feature-card">
+              <div>
+                <span class="badge badge-info">${escapeHtml(r.category)}</span>
+                <h4 style="margin-top:6px;">${escapeHtml(r.title)}</h4>
+              </div>
+              <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Buka Referensi</a>
+            </div>
+          `).join("")
+        : `<p class="text-muted">Belum ada referensi yang dibagikan Guru.</p>`;
+    }
+
+    async function handleSaveScript(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId || currentUser.docId;
+      const title = document.getElementById("scriptTitleInput").value.trim();
+      const author = document.getElementById("scriptAuthorInput").value.trim();
+      const content = document.getElementById("scriptContentInput").value;
+
+      if (!title) {
+        showToast("Judul naskah wajib diisi.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSaveScript");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan naskah ke database...");
+      try {
+        await saveDocument(COLS.SCRIPTS, `script_${gId}`, {
+          id: `script_${gId}`,
+          title,
+          author,
+          content,
+          classId: grp?.classId || currentUser.classId || "",
+          groupId: gId
+        });
+        showToast("Naskah produksi berhasil disimpan.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan naskah: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    function renderStageBlockingGrid() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const scene = document.getElementById("blockingSceneFilter").value;
+      const pins = state.blocking.filter((b) => b.groupId === gId && b.scene === scene);
+
+      const blkNotice = document.getElementById("blockingAccessNotice");
+      const blkForm = document.getElementById("blockingPinForm");
+      if (!perms.canEditBlocking) {
+        blkNotice.innerHTML =
+          `<strong>Mode Pantau Denah Panggung:</strong> Penempatan posisi aktor & set dikelola oleh <strong>Sutradara, Asisten Sutradara, Stage Manager, Penata Artistik,</strong> atau <strong>Pimpinan Produksi</strong>.`;
+        blkNotice.classList.remove("hidden");
+        blkForm.classList.add("hidden");
+      } else {
+        blkNotice.classList.add("hidden");
+        blkForm.classList.remove("hidden");
+      }
+
+      const grid = document.getElementById("stageGrid9");
+      grid.innerHTML = STAGE_ZONES.map((z) => {
+        const zonePins = pins.filter((p) => p.zone === z.key);
+        const pinsHtml = zonePins.map((p) => `
+          <div class="stage-pin ${p.pinType === "PROP" ? "stage-pin-prop" : "stage-pin-actor"}">
+            <div>
+              <strong>${p.pinType === "PROP" ? "[PROP]" : "[AKTOR]"} ${escapeHtml(p.label)}</strong>
+              ${p.note ? `<div style="font-size:10px;opacity:0.85;">${escapeHtml(p.note)}</div>` : ""}
+            </div>
+            ${perms.canEditBlocking
+              ? `<button type="button" class="btn btn-xs" style="padding:1px 5px;" data-del-pin="${escapeHtml(p.docId)}">&times;</button>`
+              : ""}
+          </div>
+        `).join("");
+
+        return `
+          <div class="stage-zone-cell">
+            <div class="stage-zone-header">
+              <span>${escapeHtml(z.code)}</span>
+              <span style="font-weight:400;font-size:10px;">${escapeHtml(z.label.split("(")[1]?.replace(")", "") || "")}</span>
+            </div>
+            ${pinsHtml || `<span style="color:#64748b;font-size:10px;font-style:italic;">Area kosong</span>`}
+          </div>
+        `;
+      }).join("");
+
+      grid.querySelectorAll("[data-del-pin]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await removeDocument(COLS.BLOCKING, btn.dataset.delPin);
+            showToast("Penanda bloking dihapus.", "info");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal menghapus penanda: " + err.message, "danger");
+          }
+        });
+      });
+    }
+
+    async function handleAddBlockingPin(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) {
+        showToast("Anda belum tergabung dalam kelompok.", "warning");
+        return;
+      }
+      const scene = document.getElementById("blockingSceneFilter").value;
+      const zone = document.getElementById("pinZoneSelect").value;
+      const pinType = document.getElementById("pinTypeSelect").value;
+      const label = document.getElementById("pinLabelInput").value.trim();
+      const note = document.getElementById("pinNoteInput").value.trim();
+
+      if (!label) return;
+      const btn = document.getElementById("btnAddBlockingPin");
+      btn.disabled = true;
+      try {
+        const docId = `blk_${gId}_${Date.now()}`;
+        await saveDocument(COLS.BLOCKING, docId, {
+          id: docId,
+          groupId: gId,
+          scene,
+          zone,
+          pinType,
+          label,
+          note
+        });
+        document.getElementById("pinLabelInput").value = "";
+        document.getElementById("pinNoteInput").value = "";
+        showToast("Posisi bloking ditambahkan ke panggung.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan posisi bloking: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function startVocalRecording() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast("Browser Anda tidak mendukung perekaman mikrofon.", "warning");
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (ev) => audioChunks.push(ev.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          const audioEl = document.getElementById("vocalAudioPreview");
+          audioEl.src = URL.createObjectURL(blob);
+          audioEl.classList.remove("hidden");
+          stream.getTracks().forEach((tr) => tr.stop());
+        };
+        mediaRecorder.start();
+        document.getElementById("btnStartRec").disabled = true;
+        document.getElementById("btnStopRec").disabled = false;
+        document.getElementById("recStatusText").textContent = "Status: Sedang merekam dialog Anda...";
+      }).catch((err) => {
+        showToast("Izin mikrofon ditolak: " + err.message, "danger");
+      });
+    }
+
+    function stopVocalRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+      document.getElementById("btnStartRec").disabled = false;
+      document.getElementById("btnStopRec").disabled = true;
+      document.getElementById("recStatusText").textContent = "Status: Rekaman selesai. Silakan putar ulang di bawah.";
+    }
+
+    function startQuickChangeTimer() {
+      if (qcTimerInterval) clearInterval(qcTimerInterval);
+      qcRemaining = Math.max(5, Number(document.getElementById("qcSecondsInput").value || 45));
+      updateQcDisplay();
+      qcTimerInterval = setInterval(() => {
+        qcRemaining -= 1;
+        updateQcDisplay();
+        if (qcRemaining <= 0) {
+          clearInterval(qcTimerInterval);
+          showToast("Waktu simulasi Quick Change habis!", "warning");
+        }
+      }, 1000);
+    }
+
+    function resetQuickChangeTimer() {
+      if (qcTimerInterval) clearInterval(qcTimerInterval);
+      qcRemaining = Math.max(5, Number(document.getElementById("qcSecondsInput").value || 45));
+      updateQcDisplay();
+    }
+
+    function updateQcDisplay() {
+      const m = String(Math.floor(Math.max(0, qcRemaining) / 60)).padStart(2, "0");
+      const s = String(Math.max(0, qcRemaining) % 60).padStart(2, "0");
+      document.getElementById("qcTimerDisplay").textContent = `${m}:${s}`;
+    }
+
+    // ========================================================================
+    // TAB 4: 10 TEMPLATE DOKUMEN, INVENTARIS PROPERTI & BUKU KAS PRODUKSI
+    // ========================================================================
+    function renderDocsAndFinanceTab() {
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const mySubs = state.submissions.filter((s) => s.groupId === gId);
+
+      document.getElementById("templatesCardsGrid").innerHTML = DOC_TEMPLATES.map((tpl) => {
+        const saved = mySubs.find((s) => s.templateId === tpl.id);
+        const isMyDivTpl = perms.recommendedTemplates.includes(tpl.id);
+        const canEditThis = perms.canEditTemplate(tpl.id);
+        return `
+          <div class="feature-card" style="${isMyDivTpl ? "border-color: var(--primary); background: #fffafa;" : ""}">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                <span class="badge badge-neutral">${escapeHtml(tpl.code)} • ${escapeHtml(tpl.category)}</span>
+                <div style="display:flex;gap:4px;">
+                  ${isMyDivTpl ? `<span class="badge badge-purple">Divisi Anda</span>` : ""}
+                  ${saved ? `<span class="badge badge-success">Tersimpan</span>` : ""}
+                </div>
+              </div>
+              <h4>${escapeHtml(tpl.title)}</h4>
+              <p>${escapeHtml(tpl.desc)}</p>
+            </div>
+            <button type="button" class="btn ${canEditThis ? "btn-primary" : "btn-outline"} btn-sm" data-open-tpl="${escapeHtml(tpl.id)}">
+              ${canEditThis ? (saved ? "Buka & Ubah Dokumen" : "Isi & Ekspor .DOCX") : "Lihat & Unduh .DOCX"}
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-open-tpl]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tpl = DOC_TEMPLATES.find((x) => x.id === btn.dataset.openTpl);
+          if (tpl) openTemplateFillModal(tpl);
+        });
+      });
+
+      const invNotice = document.getElementById("inventoryAccessNotice");
+      const invForm = document.getElementById("inventoryForm");
+      if (!perms.canEditInventory) {
+        invNotice.innerHTML =
+          `<strong>Mode Lihat Inventaris:</strong> Penambahan & penghapusan properti dikelola oleh <strong>Penata Artistik, Penata Kostum & Rias, Stage Manager, Penata Cahaya/Suara,</strong> atau <strong>Pimpinan Produksi</strong>.`;
+        invNotice.classList.remove("hidden");
+        invForm.classList.add("hidden");
+      } else {
+        invNotice.classList.add("hidden");
+        invForm.classList.remove("hidden");
+      }
+
+      const myInv = state.inventory.filter((item) => item.groupId === gId);
+      const invBody = document.getElementById("inventoryTableBody");
+      invBody.innerHTML = myInv.length
+        ? myInv.map((item) => {
+            const stCls = item.status === "Siap Pentas" ? "badge-success" : item.status === "Dalam Proses" ? "badge-warning" : "badge-danger";
+            return `
+              <tr>
+                <td><code>${escapeHtml(item.code || "-")}</code></td>
+                <td><strong>${escapeHtml(item.name)}</strong></td>
+                <td>${escapeHtml(item.scene || "-")}</td>
+                <td>${escapeHtml(item.qty || "1")}</td>
+                <td>${escapeHtml(item.source || "-")}</td>
+                <td><span class="badge ${stCls}">${escapeHtml(item.status || "Siap Pentas")}</span></td>
+                <td class="actions-col">
+                  ${perms.canEditInventory
+                    ? `<button type="button" class="btn btn-danger-outline btn-xs" data-del-inv="${escapeHtml(item.docId)}">Hapus</button>`
+                    : `<span class="field-hint">Terkunci</span>`}
+                </td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="7" class="text-center text-muted">Belum ada catatan properti atau kostum kelompok.</td></tr>`;
+
+      invBody.querySelectorAll("[data-del-inv]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await removeDocument(COLS.INVENTORY, btn.dataset.delInv);
+            showToast("Item inventaris dihapus.", "info");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal menghapus: " + err.message, "danger");
+          }
+        });
+      });
+
+      const finNotice = document.getElementById("financeAccessNotice");
+      const finForm = document.getElementById("financeForm");
+      if (!perms.canEditFinance) {
+        finNotice.innerHTML =
+          `<strong>Transparansi Keuangan Produksi:</strong> Pencatatan pemasukan & pengeluaran kas hanya dapat diubah oleh <strong>Bendahara & Dana Usaha</strong> atau <strong>Pimpinan Produksi</strong>.`;
+        finNotice.classList.remove("hidden");
+        finForm.classList.add("hidden");
+      } else {
+        finNotice.classList.add("hidden");
+        finForm.classList.remove("hidden");
+      }
+
+      const myFin = state.finance
+        .filter((f) => f.groupId === gId)
+        .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+      const totalIn = myFin.filter((f) => f.type === "IN").reduce((a, b) => a + Number(b.amount || 0), 0);
+      const totalOut = myFin.filter((f) => f.type === "OUT").reduce((a, b) => a + Number(b.amount || 0), 0);
+      const bal = totalIn - totalOut;
+
+      document.getElementById("finTotalIn").textContent = formatRupiah(totalIn);
+      document.getElementById("finTotalOut").textContent = formatRupiah(totalOut);
+      document.getElementById("finBalance").textContent = formatRupiah(bal);
+
+      const finBody = document.getElementById("financeTableBody");
+      finBody.innerHTML = myFin.length
+        ? myFin.map((f) => `
+            <tr>
+              <td>${escapeHtml(formatIndoDate(f.date))}</td>
+              <td><span class="badge ${f.type === "IN" ? "badge-success" : "badge-danger"}">${f.type === "IN" ? "Pemasukan" : "Pengeluaran"}</span></td>
+              <td>${escapeHtml(f.division || "-")}</td>
+              <td>${escapeHtml(f.description)}</td>
+              <td class="num"><strong>${formatRupiah(f.amount)}</strong></td>
+              <td class="actions-col">
+                ${perms.canEditFinance
+                  ? `<button type="button" class="btn btn-danger-outline btn-xs" data-del-fin="${escapeHtml(f.docId)}">Hapus</button>`
+                  : `<span class="field-hint">Terkunci</span>`}
+              </td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="6" class="text-center text-muted">Belum ada catatan transaksi kas produksi.</td></tr>`;
+
+      finBody.querySelectorAll("[data-del-fin]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await removeDocument(COLS.FINANCE, btn.dataset.delFin);
+            showToast("Catatan transaksi kas dihapus.", "info");
+            await loadStudentWorkspace();
+          } catch (err) {
+            showToast("Gagal menghapus: " + err.message, "danger");
+          }
+        });
+      });
+
+      document.getElementById("studentDriveLinks").innerHTML = state.driveFolders.map((f) => `
+        <div class="mini-summary-card" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <strong style="font-size:12px;">${escapeHtml(f.name)}</strong>
+          ${f.url
+            ? `<a href="${escapeHtml(f.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-xs">Buka</a>`
+            : `<span class="field-hint">Kosong</span>`}
+        </div>
+      `).join("");
+    }
+
+    async function handleAddInventory(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) return;
+
+      const code = document.getElementById("invCodeInput").value.trim() || `PRP-${state.inventory.length + 1}`;
+      const name = document.getElementById("invNameInput").value.trim();
+      const scene = document.getElementById("invSceneInput").value.trim();
+      const qty = document.getElementById("invQtyInput").value.trim() || "1 buah";
+      const source = document.getElementById("invSourceInput").value.trim();
+      const status = document.getElementById("invStatusSelect").value;
+
+      if (!name) return;
+      const btn = document.getElementById("btnAddInventory");
+      btn.disabled = true;
+      try {
+        const docId = `inv_${gId}_${Date.now()}`;
+        await saveDocument(COLS.INVENTORY, docId, {
+          id: docId,
+          groupId: gId,
+          code,
+          name,
+          scene,
+          qty,
+          source,
+          status
+        });
+        document.getElementById("inventoryForm").reset();
+        document.getElementById("invQtyInput").value = "1 buah";
+        showToast("Inventaris properti/kostum berhasil ditambahkan.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan inventaris: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleAddFinance(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) return;
+
+      const date = document.getElementById("finDateInput").value;
+      const type = document.getElementById("finTypeSelect").value;
+      const division = document.getElementById("finDivInput").value.trim();
+      const description = document.getElementById("finDescInput").value.trim();
+      const amount = Number(document.getElementById("finAmountInput").value || 0);
+
+      if (!description || amount <= 0) return;
+      const btn = document.getElementById("btnAddFinance");
+      btn.disabled = true;
+      try {
+        const docId = `fin_${gId}_${Date.now()}`;
+        await saveDocument(COLS.FINANCE, docId, {
+          id: docId,
+          groupId: gId,
+          date,
+          type,
+          division,
+          description,
+          amount,
+          createdBy: currentUser.name
+        });
+        document.getElementById("finDescInput").value = "";
+        document.getElementById("finAmountInput").value = "";
+        showToast("Transaksi kas produksi berhasil dicatat.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal mencatat transaksi: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function openTemplateFillModal(tpl) {
+      activeTemplate = tpl;
+      const canEditTpl = perms.canEditTemplate(tpl.id);
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId || currentUser.docId;
+      const members = getGroupMembers();
+      const sessions = getGroupAttendanceSessions();
+      const myInv = state.inventory.filter((item) => item.groupId === gId);
+      const leaderUser = members.find((m) => m.role === "LEADER" || m.roleId === "Pimpinan Produksi");
+      const teacherUser = state.users.find((u) => (u.id || u.docId) === grp?.teacherId);
+
+      document.getElementById("tplModalTitle").textContent = `${tpl.code} — ${tpl.title}`;
+
+      const roleAlert = document.getElementById("tplRolePermissionAlert");
+      if (canEditTpl) {
+        roleAlert.className = "alert alert-info";
+        roleAlert.innerHTML = `<strong>Akses Edit Aktif:</strong> Anda memiliki kewenangan untuk menyusun, memperbarui, dan menyimpan dokumen ini ke Cloud & Guru Pengampu.`;
+      } else {
+        roleAlert.className = "alert alert-warning";
+        roleAlert.innerHTML = `<strong>Mode Baca & Unduh (Read-Only):</strong> Dokumen ini dikelola oleh <strong>${escapeHtml(perms.getTemplateOwnersLabel(tpl.id))}</strong>. Anda tetap dapat mengunduh salinan Word (.docx).`;
+      }
+
+      const cloudSub = state.submissions.find((s) => s.groupId === gId && s.templateId === tpl.id);
+      const draftKey = `sp_ppt_draft_${gId}_${tpl.id}`;
+      let localDraft = null;
+      try {
+        const raw = localStorage.getItem(draftKey);
+        if (raw) localDraft = JSON.parse(raw);
+      } catch {
+        localDraft = null;
+      }
+
+      const savedMeta = cloudSub?.meta || localDraft?.meta || {};
+      document.getElementById("tplMetaSchool").value = savedMeta.schoolName || "UNIT PRODUKSI SENI TEATER SEKOLAH";
+      document.getElementById("tplMetaDocNum").value = savedMeta.docNumber || `${tpl.code}/${new Date().getFullYear()}`;
+      document.getElementById("tplMetaDate").value = savedMeta.eventDate || "";
+      document.getElementById("tplMetaVenue").value = savedMeta.venue || "Panggung Pertunjukan Sekolah";
+      document.getElementById("tplMetaLeader").value = savedMeta.leaderName || leaderUser?.name || "";
+      document.getElementById("tplMetaTeacher").value = savedMeta.teacherName || teacherUser?.name || "";
+      document.getElementById("tplIntroInput").value =
+        cloudSub?.introText || localDraft?.introText || tpl.defaultIntro || "";
+
+      if (cloudSub?.rows?.length) {
+        activeTemplateRows = cloudSub.rows.map((r) => [...r]);
+        document.getElementById("tplNotesInput").value = cloudSub.notes || "";
+      } else if (localDraft?.rows?.length) {
+        activeTemplateRows = localDraft.rows.map((r) => [...r]);
+        document.getElementById("tplNotesInput").value = localDraft.notes || "";
+      } else if (tpl.autoFillType === "MEMBERS") {
+        activeTemplateRows = members.map((m, idx) => {
+          const meta = getRoleMetadata(m.roleId, m.role);
+          return [
+            String(idx + 1),
+            m.name,
+            m.nis || "-",
+            m.roleId || (m.role === "LEADER" ? "Pimpinan Produksi" : "Anggota"),
+            meta.tupoksi,
+            m.whatsapp || "-"
+          ];
+        });
+        document.getElementById("tplNotesInput").value = "";
+      } else if (tpl.autoFillType === "ATTENDANCE") {
+        activeTemplateRows = members.map((m, idx) => {
+          const att = computeMemberAttendance(m, sessions);
+          return [
+            String(idx + 1),
+            m.name,
+            m.roleId || m.role,
+            String(att.present),
+            String(att.late),
+            String(att.excused),
+            String(att.absent),
+            `${att.percentage}%`
+          ];
+        });
+        document.getElementById("tplNotesInput").value = "";
+      } else if (tpl.autoFillType === "INVENTORY" && myInv.length > 0) {
+        activeTemplateRows = myInv.map((item) => [
+          item.code || "-",
+          item.name,
+          item.scene || "-",
+          item.qty || "1",
+          item.source || "-",
+          item.status || "Siap Pentas"
+        ]);
+        document.getElementById("tplNotesInput").value = "";
+      } else {
+        activeTemplateRows = tpl.sampleRows.map((r) => [...r]);
+        document.getElementById("tplNotesInput").value = "";
+      }
+
+      document.getElementById("tplTableHead").innerHTML = `
+        <tr>
+          ${tpl.columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}
+          <th class="actions-col">Hapus</th>
+        </tr>
+      `;
+      renderTemplateFillRows();
+
+      ["tplMetaSchool", "tplMetaDocNum", "tplMetaDate", "tplMetaVenue", "tplMetaLeader", "tplMetaTeacher", "tplIntroInput", "tplNotesInput"].forEach((id) => {
+        document.getElementById(id).disabled = !canEditTpl;
+      });
+      document.getElementById("btnAddTplRow").classList.toggle("hidden", !canEditTpl);
+      document.getElementById("btnFillSampleRows").classList.toggle("hidden", !canEditTpl);
+      document.getElementById("btnSubmitDocToTeacher").classList.toggle("hidden", !canEditTpl);
+
+      document.getElementById("templateFillModal").classList.remove("hidden");
+
+      if (autoSaveInterval) clearInterval(autoSaveInterval);
+      if (canEditTpl) {
+        autoSaveInterval = setInterval(() => {
+          if (!activeTemplate) return;
+          const rows = collectTemplateRowsFromDom();
+          localStorage.setItem(
+            draftKey,
+            JSON.stringify({
+              meta: collectTemplateMetaFromDom(),
+              introText: document.getElementById("tplIntroInput").value,
+              rows,
+              notes: document.getElementById("tplNotesInput").value
+            })
+          );
+          document.getElementById("tplAutoSaveStatus").textContent =
+            `Draft otomatis tersimpan pukul ${new Date().toLocaleTimeString("id-ID")}`;
+        }, 30000);
+      } else {
+        document.getElementById("tplAutoSaveStatus").textContent = "Mode pratinjau dokumen kelompok (hanya baca & unduh .docx)";
+      }
+    }
+
+    function recalculateTemplateLiveTotals() {
+      const totalBadge = document.getElementById("tplLiveGrandTotalBadge");
+      const calc = activeTemplate?.calcConfig;
+      if (!calc) {
+        totalBadge.classList.add("hidden");
+        return;
+      }
+
+      let grandTotal = 0;
+      activeTemplateRows.forEach((row, rIdx) => {
+        const qty = parseNumericValue(row[calc.qtyCol]);
+        const price = parseNumericValue(row[calc.priceCol]);
+        const subtotal = qty * price;
+        row[calc.totalCol] = String(subtotal);
+        grandTotal += subtotal;
+
+        const totalCellInput = document.querySelector(
+          `#tplTableBody input[data-r="${rIdx}"][data-c="${calc.totalCol}"]`
+        );
+        if (totalCellInput) {
+          totalCellInput.value = subtotal.toLocaleString("id-ID");
+        }
+      });
+
+      totalBadge.textContent = `Total Anggaran: ${formatRupiah(grandTotal)}`;
+      totalBadge.classList.remove("hidden");
+    }
+
+    function renderTemplateFillRows() {
+      const tbody = document.getElementById("tplTableBody");
+      const calc = activeTemplate?.calcConfig;
+      const canEditTpl = activeTemplate ? perms.canEditTemplate(activeTemplate.id) : true;
+
+      tbody.innerHTML = activeTemplateRows.map((row, rIdx) => `
+        <tr>
+          ${activeTemplate.columns.map((_, cIdx) => {
+            const isReadOnlyTotal = calc && cIdx === calc.totalCol;
+            const rawVal = row[cIdx] ?? "";
+            const displayVal = isReadOnlyTotal ? parseNumericValue(rawVal).toLocaleString("id-ID") : rawVal;
+            return `
+              <td>
+                <input
+                  type="text"
+                  data-r="${rIdx}"
+                  data-c="${cIdx}"
+                  value="${escapeHtml(displayVal)}"
+                  ${isReadOnlyTotal ? 'readonly style="background:#f1f5f9;font-weight:700;text-align:right;"' : ""}
+                  ${!canEditTpl ? 'disabled style="background:#f8fafc;"' : ""}
+                />
+              </td>
+            `;
+          }).join("")}
+          <td class="actions-col">
+            ${canEditTpl
+              ? `<button type="button" class="btn btn-danger-outline btn-xs" data-del-row="${rIdx}">&times;</button>`
+              : `<span class="field-hint">-</span>`}
+          </td>
+        </tr>
+      `).join("");
+
+      tbody.querySelectorAll("input[data-r]").forEach((inp) => {
+        inp.addEventListener("input", () => {
+          const r = Number(inp.dataset.r);
+          const c = Number(inp.dataset.c);
+          activeTemplateRows[r][c] = inp.value;
+          if (calc && (c === calc.qtyCol || c === calc.priceCol)) {
+            recalculateTemplateLiveTotals();
+          }
+        });
+      });
+
+      tbody.querySelectorAll("[data-del-row]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.delRow);
+          activeTemplateRows.splice(idx, 1);
+          renderTemplateFillRows();
+        });
+      });
+
+      recalculateTemplateLiveTotals();
+    }
+
+    function collectTemplateMetaFromDom() {
+      return {
+        schoolName: document.getElementById("tplMetaSchool").value.trim(),
+        docNumber: document.getElementById("tplMetaDocNum").value.trim(),
+        eventDate: document.getElementById("tplMetaDate").value.trim(),
+        venue: document.getElementById("tplMetaVenue").value.trim(),
+        leaderName: document.getElementById("tplMetaLeader").value.trim(),
+        teacherName: document.getElementById("tplMetaTeacher").value.trim()
+      };
+    }
+
+    function collectTemplateRowsFromDom() {
+      const calc = activeTemplate?.calcConfig;
+      return activeTemplateRows.map((row) => {
+        const copy = [...row];
+        if (calc) {
+          const qty = parseNumericValue(copy[calc.qtyCol]);
+          const price = parseNumericValue(copy[calc.priceCol]);
+          copy[calc.totalCol] = String(qty * price);
+        }
+        return copy;
+      });
+    }
+
+    async function handleExportOrSubmitDoc(alsoSaveToCloud) {
+      if (!activeTemplate) return;
+      const grp = getMyGroup();
+      const cls = state.classes.find((c) => (c.id || c.docId) === (grp?.classId || currentUser.classId));
+      const gId = grp?.id || grp?.docId || currentUser.docId;
+      const meta = collectTemplateMetaFromDom();
+      const introText = document.getElementById("tplIntroInput").value.trim();
+      const rows = collectTemplateRowsFromDom();
+      const notes = document.getElementById("tplNotesInput").value.trim();
+
+      showLoader(true, alsoSaveToCloud ? "Menyimpan dokumen ke database..." : "Menyiapkan file Word (.docx)...");
+      try {
+        if (alsoSaveToCloud) {
+          const subDocId = `sub_${gId}_${activeTemplate.id}`;
+          await saveDocument(COLS.SUBMISSIONS, subDocId, {
+            id: subDocId,
+            templateId: activeTemplate.id,
+            templateCode: activeTemplate.code,
+            templateTitle: activeTemplate.title,
+            category: activeTemplate.category,
+            classId: grp?.classId || currentUser.classId || "",
+            groupId: gId,
+            submittedBy: currentUser.docId,
+            submittedByName: currentUser.name,
+            meta,
+            introText,
+            rows,
+            notes
+          });
+          localStorage.removeItem(`sp_ppt_draft_${gId}_${activeTemplate.id}`);
+          showToast("Dokumen berhasil disimpan dan dikirim ke Guru Pengampu!", "success");
+          await loadStudentWorkspace();
+        } else {
+          await exportProductionDocx({
+            docCode: activeTemplate.code,
+            title: activeTemplate.title,
+            category: activeTemplate.category,
+            className: cls?.name || "-",
+            groupName: grp?.name || "-",
+            productionTitle: grp?.title || "-",
+            authorName: currentUser.name,
+            meta,
+            introText,
+            columns: activeTemplate.columns,
+            rows,
+            calcConfig: activeTemplate.calcConfig || null,
+            currencyCols: activeTemplate.currencyCols || [],
+            signatories: activeTemplate.signatories || null,
+            notes
+          });
+          showToast("File Microsoft Word (.docx) berhasil diunduh!", "success");
+        }
+      } catch (err) {
+        showToast("Gagal memproses dokumen: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    // ========================================================================
+    // TAB 5: PENILAIAN 360°, GRAFIK PERBANDINGAN, RAPOR INDIVIDU & E-PROGRAM
+    // ========================================================================
+    function renderAssessment360Tab() {
+      const myIds = new Set([currentUser.id, currentUser.docId, currentUser.authUid].filter(Boolean));
+      const existingSelf = state.assessments.find(
+        (a) => a.evaluatorType === "SELF" && myIds.has(a.targetUserId)
+      );
+
+      document.getElementById("selfAssessAspects").innerHTML = RUBRIC_ASPECTS.map((asp) => {
+        const val = Number(existingSelf?.scores?.[asp.key] ?? 85);
+        return `
+          <div class="form-group">
+            <label for="self_${asp.key}">${escapeHtml(asp.label)} (0–100)</label>
+            <input type="number" id="self_${asp.key}" min="0" max="100" value="${val}" required />
+          </div>
+        `;
+      }).join("");
+      document.getElementById("selfReflectionInput").value = existingSelf?.feedback || "";
+
+      const peers = getGroupMembers().filter((m) => !myIds.has(m.id) && !myIds.has(m.docId));
+      document.getElementById("peerTargetSelect").innerHTML =
+        `<option value="">-- Pilih Rekan Satu Kelompok (${peers.length}) --</option>` +
+        peers.map((p) => `<option value="${escapeHtml(p.id || p.docId)}">${escapeHtml(p.name)} (${escapeHtml(p.roleId || p.role)})</option>`).join("");
+
+      document.getElementById("peerAssessAspects").innerHTML = RUBRIC_ASPECTS.map((asp) => `
+        <div class="form-group">
+          <label for="peer_${asp.key}">${escapeHtml(asp.label)} (0–100)</label>
+          <input type="number" id="peer_${asp.key}" min="0" max="100" value="85" required />
+        </div>
+      `).join("");
+
+      const summary = computeStudent360Summary(currentUser, state.assessments, state.weights);
+      const bars = [
+        { label: `Penilaian Diri (Self — Bobot ${state.weights.self}%)`, val: summary.selfAvg ?? 0, color: "#0284c7" },
+        { label: `Penilaian Teman Sejawat (Peer — Bobot ${state.weights.peer}%)`, val: summary.peerAvg ?? 0, color: "#7c3aed" },
+        { label: `Penilaian Guru Pengampu (Teacher — Bobot ${state.weights.teacher}%)`, val: summary.teacherAvg ?? 0, color: "#15803d" },
+        { label: `NILAI AKHIR TERBOBOT 360° (${summary.predikat})`, val: summary.finalScore, color: "#7f1d1d" }
+      ];
+
+      document.getElementById("myScoreComparisonChart").innerHTML = bars.map((b) => `
+        <div class="score-bar-row">
+          <div class="score-bar-meta">
+            <span>${escapeHtml(b.label)}</span>
+            <strong>${Number(b.val).toFixed(2)}</strong>
+          </div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" style="width:${Math.min(100, Math.max(0, b.val))}%;background:${b.color};"></div>
+          </div>
+        </div>
+      `).join("");
+
+      const fbBox = document.getElementById("teacherFeedbackCard");
+      if (summary.latestTeacher?.feedback) {
+        fbBox.innerHTML =
+          `<strong>Catatan Evaluasi Guru (${escapeHtml(summary.latestTeacher.evaluatorName || "Guru")}):</strong><br>` +
+          `${escapeHtml(summary.latestTeacher.feedback)}`;
+      }
+
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      const myAud = state.audience
+        .filter((a) => a.groupId === gId)
+        .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+
+      document.getElementById("audienceFeedbackList").innerHTML = myAud.length
+        ? myAud.map((a) => `
+            <div class="mini-summary-card">
+              <div class="mini-summary-head">
+                <strong>${escapeHtml(a.guestName)}</strong>
+                <span class="badge badge-warning">${"★".repeat(Number(a.rating || 5))}</span>
+              </div>
+              <div class="mini-summary-sub">${escapeHtml(a.comment)}</div>
+            </div>
+          `).join("")
+        : `<p class="text-muted">Belum ada catatan apresiasi penonton.</p>`;
+
+      document.getElementById("stuProfileName").value = currentUser.name || "";
+      document.getElementById("stuProfileWa").value = currentUser.whatsapp || "";
+      document.getElementById("removeStudentAvatarFlag").value = "false";
+      document.getElementById("studentAvatarPreviewWrap").innerHTML = renderAvatarHtml(currentUser, 48);
+      document.getElementById("btnRemoveStudentAvatar").classList.toggle("hidden", !currentUser.avatarUrl);
+      if (currentUser.roleId) {
+        document.getElementById("stuProfileRole").value = currentUser.roleId;
+      }
+    }
+
+    async function handleDownloadMyRapor() {
+      const grp = getMyGroup();
+      const cls = state.classes.find((c) => (c.id || c.docId) === (grp?.classId || currentUser.classId));
+      const teacher = state.users.find((u) => (u.id || u.docId) === grp?.teacherId);
+      const summary = computeStudent360Summary(currentUser, state.assessments, state.weights);
+      const att = computeMemberAttendance(currentUser, getGroupAttendanceSessions());
+
+      showLoader(true, "Menyiapkan Rapor Evaluasi Individu (.docx)...");
+      try {
+        await exportIndividualReportDocx({
+          student: currentUser,
+          className: cls?.name || "-",
+          groupName: grp?.name || "-",
+          productionTitle: grp?.title || "-",
+          teacherName: teacher?.name || "Guru Pengampu",
+          summary360: summary,
+          attendanceStats: att,
+          weights: state.weights
+        });
+        showToast("Kartu Hasil Penilaian / Rapor Individu (.docx) berhasil diunduh!", "success");
+      } catch (err) {
+        showToast("Gagal mengunduh rapor: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function handleDownloadEProgram() {
+      const grp = getMyGroup();
+      if (!grp) {
+        showToast("Anda belum tergabung dalam kelompok produksi.", "warning");
+        return;
+      }
+      const gId = grp.id || grp.docId;
+      const cls = state.classes.find((c) => (c.id || c.docId) === grp.classId);
+      const teacher = state.users.find((u) => (u.id || u.docId) === grp.teacherId);
+      const script = state.scripts.find((s) => s.groupId === gId);
+
+      showLoader(true, "Menyusun E-Program Buku Acara Pementasan (.docx)...");
+      try {
+        await exportEProgramDocx({
+          group: grp,
+          className: cls?.name || "-",
+          members: getGroupMembers(),
+          script,
+          teacherName: teacher?.name || "-"
+        });
+        showToast("E-Program Buku Acara Pementasan (.docx) berhasil diunduh!", "success");
+      } catch (err) {
+        showToast("Gagal membuat E-Program: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function handleSaveAudienceFeedback(e) {
+      e.preventDefault();
+      const grp = getMyGroup();
+      const gId = grp?.id || grp?.docId;
+      if (!gId) return;
+
+      const guestName = document.getElementById("audNameInput").value.trim();
+      const rating = Number(document.getElementById("audRatingSelect").value || 5);
+      const comment = document.getElementById("audCommentInput").value.trim();
+
+      if (!guestName || !comment) return;
+      const btn = document.getElementById("btnSaveAudience");
+      btn.disabled = true;
+      try {
+        const docId = `aud_${gId}_${Date.now()}`;
+        await saveDocument(COLS.AUDIENCE, docId, {
+          id: docId,
+          groupId: gId,
+          guestName,
+          rating,
+          comment
+        });
+        document.getElementById("audienceFeedbackForm").reset();
+        showToast("Apresiasi penonton berhasil dicatat!", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan apresiasi: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleSaveSelfAssess(e) {
+      e.preventDefault();
+      const scores = {};
+      RUBRIC_ASPECTS.forEach((asp) => {
+        scores[asp.key] = Math.max(0, Math.min(100, Number(document.getElementById(`self_${asp.key}`).value || 0)));
+      });
+      const feedback = document.getElementById("selfReflectionInput").value.trim();
+      const myTargetId = currentUser.id || currentUser.docId;
+
+      const btn = document.getElementById("btnSaveSelfAssess");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan penilaian diri...");
+      try {
+        const docId = `self_${currentUser.docId}`;
+        await saveDocument(COLS.ASSESSMENTS, docId, {
+          id: docId,
+          targetUserId: myTargetId,
+          evaluatorId: currentUser.docId,
+          evaluatorName: currentUser.name,
+          evaluatorType: "SELF",
+          classId: currentUser.classId || "",
+          groupId: currentUser.groupId || "",
+          scores,
+          average: calculateAspectAverage(scores),
+          feedback
+        });
+        showToast("Penilaian diri (Self Assessment) berhasil disimpan.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal menyimpan penilaian diri: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSavePeerAssess(e) {
+      e.preventDefault();
+      const targetUserId = document.getElementById("peerTargetSelect").value;
+      if (!targetUserId) {
+        showToast("Pilih terlebih dahulu rekan kelompok yang akan dinilai.", "warning");
+        return;
+      }
+
+      const scores = {};
+      RUBRIC_ASPECTS.forEach((asp) => {
+        scores[asp.key] = Math.max(0, Math.min(100, Number(document.getElementById(`peer_${asp.key}`).value || 0)));
+      });
+
+      const btn = document.getElementById("btnSavePeerAssess");
+      btn.disabled = true;
+      showLoader(true, "Mengirim penilaian teman sejawat...");
+      try {
+        const docId = `peer_${currentUser.docId}_${targetUserId}`;
+        await saveDocument(COLS.ASSESSMENTS, docId, {
+          id: docId,
+          targetUserId,
+          evaluatorId: currentUser.docId,
+          evaluatorName: currentUser.name,
+          evaluatorType: "PEER",
+          classId: currentUser.classId || "",
+          groupId: currentUser.groupId || "",
+          scores,
+          average: calculateAspectAverage(scores)
+        });
+        showToast("Penilaian teman sejawat berhasil dikirim.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal mengirim penilaian rekan: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSaveStudentProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById("stuProfileName").value.trim();
+      const whatsapp = document.getElementById("stuProfileWa").value.trim();
+      const roleId = document.getElementById("stuProfileRole").value;
+      const avatarFile = document.getElementById("studentAvatarFileInput").files[0];
+      const removeAvatar = document.getElementById("removeStudentAvatarFlag").value === "true";
+
+      const btn = document.getElementById("btnSaveStudentProfile");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan profil & foto Anda...");
+      try {
+        const updates = { name, whatsapp, roleId };
+        if (avatarFile) {
+          updates.avatarUrl = await compressImageFile(avatarFile, 280, 0.72);
+        } else if (removeAvatar) {
+          updates.avatarUrl = "";
+        }
+
+        await saveDocument(COLS.USERS, currentUser.docId, updates);
+        Object.assign(currentUser, updates);
+        perms = getDivisionPermissions(currentUser);
+        document.getElementById("studentNameDisplay").textContent = name;
+        document.getElementById("studentAvatarTopbar").innerHTML = renderAvatarHtml(currentUser, 28);
+        showToast("Profil dan foto pribadi berhasil diperbarui.", "success");
+        await loadStudentWorkspace();
+      } catch (err) {
+        showToast("Gagal memperbarui profil: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleChangeStudentPassword(e) {
+      e.preventDefault();
+      const p1 = document.getElementById("stuNewPassword").value;
+      const p2 = document.getElementById("stuConfirmPassword").value;
+      if (p1 !== p2) {
+        showToast("Konfirmasi kata sandi tidak cocok.", "warning");
+        return;
+      }
+      const btn = document.getElementById("btnChangeStuPwd");
+      btn.disabled = true;
+      showLoader(true, "Memperbarui kata sandi...");
+      try {
+        await changeOwnPassword(p1);
+        document.getElementById("studentPasswordForm").reset();
+        showToast("Kata sandi akun berhasil diperbarui.", "success");
+      } catch (err) {
+        showToast(err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+  </script>
+</body>
+</html>
