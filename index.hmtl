@@ -1,0 +1,152 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masuk — Sistem Penilaian Proyek Produksi Teater (SP-PPT)</title>
+  <!-- Menghubungkan stylesheet utama aplikasi -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-body">
+  <main class="login-wrapper">
+    <section class="login-card">
+      <!-- Identitas & Header Halaman Masuk -->
+      <div class="login-brand">
+        <span class="brand-badge">SP-PPT • TEATER</span>
+        <h1>Sistem Penilaian Proyek Produksi Teater</h1>
+        <p class="login-subtitle">
+          Masuk menggunakan akun Admin, Guru Pengampu, Pimpinan Produksi, atau Siswa
+        </p>
+      </div>
+
+      <!-- Kotak Peringatan Kesalahan Login -->
+      <div id="loginErrorBox" class="alert alert-danger hidden" role="alert"></div>
+
+      <!-- Formulir Login Terpadu -->
+      <form id="loginForm" class="form-stack" novalidate>
+        <div class="form-group">
+          <label for="loginIdentifier">Username atau Email <span class="required">*</span></label>
+          <input
+            type="text"
+            id="loginIdentifier"
+            placeholder="Contoh: admin atau guru01@sekolah.sch.id"
+            autocomplete="username"
+            required
+          />
+          <span class="field-hint">
+            Akun versi lama tetap dapat masuk menggunakan username dan kata sandi lama.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Kata Sandi <span class="required">*</span></label>
+          <div class="password-input-wrap">
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Masukkan kata sandi"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" id="togglePwdBtn" class="btn-icon-inline">Tampilkan</button>
+          </div>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
+          Masuk ke Sistem
+        </button>
+      </form>
+
+      <!-- Informasi Ringkas Bobot & Aspek Rubrik -->
+      <div class="login-footer">
+        <p>Rubrik Penilaian 360°: <strong>Self 15% • Peer 25% • Teacher 60%</strong></p>
+        <p>Aspek: Disiplin, Kolaborasi, Kualitas, Tanggung Jawab</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modul Autentikasi & Pengalihan Otomatis Berdasarkan Role -->
+  <script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      auth,
+      loginWithIdentifier,
+      getUserProfileByUid,
+      getDashboardUrlByRole,
+      showLoader,
+      showToast
+    } from "./js/app.js";
+
+    const loginForm = document.getElementById("loginForm");
+    const identifierInput = document.getElementById("loginIdentifier");
+    const passwordInput = document.getElementById("loginPassword");
+    const togglePwdBtn = document.getElementById("togglePwdBtn");
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    const errorBox = document.getElementById("loginErrorBox");
+
+    let isSubmitting = false;
+
+    // Jika pengguna sudah memiliki sesi login aktif, langsung arahkan ke dasbor sesuai role
+    onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser && !isSubmitting) {
+        try {
+          const profile = await getUserProfileByUid(fbUser.uid);
+          if (profile && profile.status !== "SUSPENDED" && profile.active !== false) {
+            window.location.replace(getDashboardUrlByRole(profile.role));
+          }
+        } catch (err) {
+          console.warn("Pemeriksaan sesi awal:", err);
+        }
+      }
+    });
+
+    // Tombol tampilkan/sembunyikan kata sandi
+    togglePwdBtn.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePwdBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
+    });
+
+    // Proses pengiriman formulir login
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (isSubmitting) return;
+
+      errorBox.classList.add("hidden");
+      const identifier = identifierInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!identifier || !password) {
+        errorBox.textContent = "Harap isi Username/Email dan Kata Sandi terlebih dahulu.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Memverifikasi Akun...";
+      showLoader(true, "Menghubungkan ke server autentikasi...");
+
+      try {
+        // Mendukung akun baru maupun migrasi otomatis akun lama (Legacy Bridge)
+        const profile = await loginWithIdentifier(identifier, password);
+        showToast(`Selamat datang, ${profile.name}!`, "success");
+        setTimeout(() => {
+          window.location.replace(getDashboardUrlByRole(profile.role));
+        }, 350);
+      } catch (err) {
+        errorBox.textContent = err.message || "Gagal masuk ke sistem.";
+        errorBox.classList.remove("hidden");
+        showToast(err.message || "Login gagal.", "danger");
+      } finally {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Masuk ke Sistem";
+        showLoader(false);
+      }
+    });
+  </script>
+</body>
+</html>
+```
