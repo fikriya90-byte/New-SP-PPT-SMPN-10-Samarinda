@@ -1,0 +1,1770 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guru Pengampu — Sistem Penilaian Proyek Produksi Teater</title>
+  <!-- Stylesheet utama SP-PPT -->
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Pustaka pembuatan dokumen Microsoft Word (.docx) di sisi klien -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+</head>
+<body>
+  <!-- Bilah Navigasi Atas -->
+  <header class="topbar no-print">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <span class="brand-pill">GURU SP-PPT</span>
+        <div>
+          <h1 class="topbar-title">Panel Penilaian & Pembimbingan Teater</h1>
+          <p class="topbar-subtitle">Penilaian Rubrik 4 Aspek (360°), Kehadiran Latihan, Review Naskah, Bloking & Dokumen</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-chip">
+          <span id="teacherAvatarTopbar"></span>
+          <span class="user-name" id="teacherNameDisplay">Memuat...</span>
+          <span class="badge badge-guru">GURU</span>
+        </div>
+        <button type="button" id="btnPrintGuru" class="btn btn-outline btn-sm">Cetak / PDF</button>
+        <button type="button" id="btnLogout" class="btn btn-danger-outline btn-sm">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Banner Peringatan Wajib Nomor WhatsApp Guru -->
+    <section id="waRequiredBanner" class="migration-banner hidden no-print">
+      <div>
+        <h3>Lengkapi Nomor WhatsApp Guru Pengampu</h3>
+        <p>Nomor WhatsApp aktif wajib diisi agar Pimpinan Produksi dan Siswa dapat berkoordinasi terkait jadwal latihan dan bimbingan.</p>
+      </div>
+      <button type="button" id="btnFocusProfileTab" class="btn btn-warning btn-sm">Lengkapi Sekarang</button>
+    </section>
+
+    <!-- Kartu Indikator Utama (KPI) -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Proyek Diampu</span>
+        <strong class="kpi-value" id="kpiMyGroups">0</strong>
+        <span class="kpi-note" id="kpiMyClasses">0 Kelas Binaan</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Total Siswa Binaan</span>
+        <strong class="kpi-value" id="kpiMyStudents">0</strong>
+        <span class="kpi-note">Anggota kelompok produksi</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Progres Penilaian</span>
+        <strong class="kpi-value" id="kpiGradingProgress">0%</strong>
+        <div class="progress-track"><div class="progress-fill" id="kpiGradingBar" style="width: 0%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Rata-rata Nilai Akhir</span>
+        <strong class="kpi-value" id="kpiMyAvgScore">0.00</strong>
+        <span class="kpi-note" id="kpiWeightLabel">Bobot: Self 15% • Peer 25% • Guru 60%</span>
+      </div>
+    </section>
+
+    <!-- Navigasi Tab Utama -->
+    <nav class="tab-nav no-print" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="tabGrading">Penilaian Proyek & Rapor Siswa</button>
+      <button type="button" class="tab-btn" data-tab="tabTasks">Progres Tugas & Deadline</button>
+      <button type="button" class="tab-btn" data-tab="tabCrewDocs">Kerabat Kerja, Kas & Dokumen (.docx)</button>
+      <button type="button" class="tab-btn" data-tab="tabStudio">Review Naskah, Bloking & Referensi</button>
+      <button type="button" class="tab-btn" data-tab="tabProfile">Profil WA, Siaran & Keamanan</button>
+    </nav>
+
+    <!-- ====================================================================
+         TAB 1: PENILAIAN PROYEK & SISWA
+         ==================================================================== -->
+    <section id="tabGrading" class="tab-pane">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Daftar Proyek & Penilaian Rubrik 4 Aspek</h2>
+            <p class="panel-desc">Nilai setiap anggota berdasarkan aspek Disiplin (terintegrasi presensi latihan), Kolaborasi, Kualitas, dan Tanggung Jawab.</p>
+          </div>
+          <div class="action-group no-print">
+            <button type="button" id="btnExportGuruCsv" class="btn btn-success btn-sm">Ekspor Nilai CSV</button>
+          </div>
+        </div>
+
+        <div class="filter-bar no-print">
+          <div class="filter-item">
+            <label for="filterGuruGroup">Filter Proyek / Kelompok</label>
+            <select id="filterGuruGroup"><option value="">Semua Proyek Diampu</option></select>
+          </div>
+          <div class="filter-item">
+            <label for="filterGuruStatus">Status Penilaian</label>
+            <select id="filterGuruStatus">
+              <option value="">Semua Status</option>
+              <option value="GRADED">Sudah Dinilai</option>
+              <option value="UNGRADED">Belum Dinilai</option>
+            </select>
+          </div>
+          <div class="filter-item filter-search">
+            <label for="filterGuruSearch">Cari Nama / Peran Siswa</label>
+            <input type="search" id="filterGuruSearch" placeholder="Ketik nama siswa atau jabatan..." />
+          </div>
+        </div>
+
+        <div id="assignedProjectsContainer" class="project-cards-stack"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 2: PROGRES TUGAS, TIMELINE & DEADLINE
+         ==================================================================== -->
+    <section id="tabTasks" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Tahapan Produksi, Tenggat Waktu & Carry Over</h2>
+            <p class="panel-desc">Tetapkan tugas milestone dengan deadline untuk kelompok binaan atau kirim pengingat WhatsApp.</p>
+          </div>
+          <div class="action-group">
+            <button type="button" id="btnOpenGuruTaskModal" class="btn btn-primary btn-sm">+ Beri Tugas & Deadline</button>
+            <button type="button" id="btnGuruCarryOver" class="btn btn-warning btn-sm">Carry Over Tugas Tertunda</button>
+          </div>
+        </div>
+
+        <div id="guruStagesStrip" class="summary-strip"></div>
+
+        <div class="filter-bar no-print">
+          <div class="filter-item">
+            <label for="filterGuruTaskGroup">Kelompok</label>
+            <select id="filterGuruTaskGroup"><option value="">Semua Kelompok</option></select>
+          </div>
+          <div class="filter-item">
+            <label for="filterGuruTaskDeadline">Status Tenggat (Deadline)</label>
+            <select id="filterGuruTaskDeadline">
+              <option value="">Semua Tugas</option>
+              <option value="OVERDUE">Terlambat (Overdue)</option>
+              <option value="URGENT">Mendekati Deadline (Hari Ini / H-3)</option>
+              <option value="PENDING">Semua Belum Selesai</option>
+              <option value="DONE">Sudah Tuntas</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="table-meta" id="guruTaskMeta">Menampilkan 0 tugas</p>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tugas / Milestone</th>
+                <th>Tahap</th>
+                <th>Kelompok</th>
+                <th>Divisi / PIC</th>
+                <th>Tenggat Waktu (Deadline)</th>
+                <th>Status</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="guruTasksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 3: KERABAT KERJA, KAS & DOKUMEN PRODUKSI (.DOCX)
+         ==================================================================== -->
+    <section id="tabCrewDocs" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Direktori Kerabat Kerja, Kehadiran & Ringkasan Kas Kelompok</h2>
+            <p class="panel-desc">Susunan lengkap anggota, persentase kehadiran latihan, dan status keuangan tiap kelompok binaan.</p>
+          </div>
+        </div>
+        <div id="guruCrewGrid" class="cards-grid-3"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Galeri Dokumen Produksi Siswa & Ekspor Word (.docx)</h2>
+            <p class="panel-desc">Periksa dokumen administrasi/artistik yang dikumpulkan kelompok dan unduh ke format .docx lengkap dengan kop dan pengesahan.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Kode & Judul Dokumen</th>
+                <th>Kategori</th>
+                <th>Kelompok</th>
+                <th>Penyusun</th>
+                <th>Terakhir Diperbarui</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="guruSubmissionsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 4: REVIEW NASKAH, PANTAUAN BLOKING & REFERENSI
+         ==================================================================== -->
+    <section id="tabStudio" class="tab-pane hidden">
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Review & Komentar Revisi Naskah Kelompok</h2>
+              <p class="panel-desc">Baca naskah drama siswa, berikan catatan dramaturgi, dan tetapkan status persetujuan pentas.</p>
+            </div>
+          </div>
+          <div id="guruScriptsList" class="form-stack"></div>
+        </div>
+
+        <div class="form-stack">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Pantauan Bloking Panggung Kelompok</h2>
+                <p class="panel-desc">Posisi aktor dan properti yang dirancang kelompok pada denah panggung.</p>
+              </div>
+            </div>
+            <div id="guruBlockingOverview" class="form-stack"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Pustaka Referensi Audio / Musik / YouTube</h2>
+                <p class="panel-desc">Bagikan referensi ilustrasi musik & referensi akting ke kelas binaan.</p>
+              </div>
+            </div>
+            <form id="guruRefForm" class="form-stack" style="margin-bottom: 16px;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="refTitleInput">Judul Referensi <span class="required">*</span></label>
+                  <input type="text" id="refTitleInput" placeholder="Contoh: Ilustrasi Musik Adegan Klimaks" required />
+                </div>
+                <div class="form-group">
+                  <label for="refClassInput">Kelas Tujuan <span class="required">*</span></label>
+                  <select id="refClassInput" required><option value="">-- Pilih Kelas --</option></select>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="refCategoryInput">Kategori</label>
+                  <select id="refCategoryInput">
+                    <option value="Musik Ilustrasi">Musik Ilustrasi</option>
+                    <option value="Efek Suara (SFX)">Efek Suara (SFX)</option>
+                    <option value="Referensi Pementasan (YouTube)">Referensi Pementasan (YouTube)</option>
+                    <option value="Olah Vokal & Tubuh">Olah Vokal & Tubuh</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="refUrlInput">Tautan Audio / YouTube <span class="required">*</span></label>
+                  <input type="url" id="refUrlInput" placeholder="https://youtube.com/..." required />
+                </div>
+              </div>
+              <button type="submit" id="btnAddRef" class="btn btn-primary btn-sm">+ Tambah Referensi</button>
+            </form>
+
+            <div id="guruRefList" class="form-stack"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 5: PROFIL WA, SIARAN PENGUMUMAN & DRIVE
+         ==================================================================== -->
+    <section id="tabProfile" class="tab-pane hidden">
+      <div class="cards-grid-2">
+        <div class="form-stack">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Profil, Foto & Validasi WhatsApp Guru</h2>
+                <p class="panel-desc">Nomor WhatsApp wajib format Indonesia (08... atau 628...).</p>
+              </div>
+            </div>
+            <form id="guruProfileForm" class="form-stack">
+              <div class="subform-box" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div id="guruAvatarPreviewWrap"></div>
+                  <div>
+                    <strong style="font-size:13px;">Foto Profil Guru Pengampu</strong>
+                    <div class="field-hint">Tampil pada direktori pembimbing & laporan</div>
+                  </div>
+                </div>
+                <div class="action-group">
+                  <label class="btn btn-outline btn-xs" style="cursor:pointer;margin:0;">
+                    Unggah Foto
+                    <input type="file" id="guruProfileAvatarFile" accept="image/*" class="hidden" />
+                  </label>
+                  <button type="button" id="btnRemoveGuruAvatar" class="btn btn-danger-outline btn-xs hidden">Hapus Foto</button>
+                </div>
+              </div>
+              <input type="hidden" id="removeGuruAvatarFlag" value="false" />
+
+              <div class="form-group">
+                <label for="guruProfileName">Nama Lengkap & Gelar <span class="required">*</span></label>
+                <input type="text" id="guruProfileName" required />
+              </div>
+              <div class="form-group">
+                <label for="guruProfileWa">Nomor WhatsApp Aktif <span class="required">*</span></label>
+                <input type="text" id="guruProfileWa" placeholder="Contoh: 081234567890" required />
+              </div>
+              <div class="form-group">
+                <label for="guruProfileNip">NIP / NUPTK</label>
+                <input type="text" id="guruProfileNip" />
+              </div>
+              <button type="submit" id="btnSaveGuruProfile" class="btn btn-primary">Simpan Profil Guru</button>
+            </form>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Keamanan Akun & Ganti Kata Sandi</h2>
+                <p class="panel-desc">Perbarui kata sandi akun Guru Pengampu secara mandiri.</p>
+              </div>
+            </div>
+            <form id="guruPasswordForm" class="form-stack">
+              <div class="form-group">
+                <label for="guruNewPassword">Kata Sandi Baru <span class="required">*</span></label>
+                <input type="password" id="guruNewPassword" minlength="6" placeholder="Minimal 6 karakter" required />
+              </div>
+              <div class="form-group">
+                <label for="guruConfirmPassword">Konfirmasi Kata Sandi Baru <span class="required">*</span></label>
+                <input type="password" id="guruConfirmPassword" minlength="6" placeholder="Ulangi kata sandi baru" required />
+              </div>
+              <button type="submit" id="btnChangeGuruPwd" class="btn btn-outline">Perbarui Kata Sandi</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="form-stack">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Kirim Pengumuman ke Kelas Binaan</h2>
+                <p class="panel-desc">Pesan akan langsung muncul di dasbor siswa.</p>
+              </div>
+            </div>
+            <form id="guruBroadcastForm" class="form-stack">
+              <div class="form-group">
+                <label for="guruBcTitle">Judul Pengumuman <span class="required">*</span></label>
+                <input type="text" id="guruBcTitle" required />
+              </div>
+              <div class="form-group">
+                <label for="guruBcClass">Kelas Tujuan</label>
+                <select id="guruBcClass"><option value="">Semua Kelas Binaan</option></select>
+              </div>
+              <div class="form-group">
+                <label for="guruBcMsg">Isi Pesan <span class="required">*</span></label>
+                <textarea id="guruBcMsg" rows="3" required></textarea>
+              </div>
+              <button type="submit" id="btnSendGuruBc" class="btn btn-primary">Kirim Pengumuman</button>
+            </form>
+
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+              <strong style="display:block;margin-bottom:8px;font-size:13px;">Riwayat Pengumuman Kelas Binaan</strong>
+              <div id="guruBroadcastsList" class="form-stack"></div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>12 Folder Arsip Google Drive</h2>
+                <p class="panel-desc">Tautan folder penyimpanan berkas produksi.</p>
+              </div>
+            </div>
+            <div id="guruDriveLinks" class="form-stack"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL INPUT / UBAH PENILAIAN SISWA -->
+  <div id="gradeModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="gradeModalTitle">Penilaian Siswa</h3>
+          <p class="modal-subtitle" id="gradeModalSub">Kelompok & Peran Produksi</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="gradeModal">&times;</button>
+      </div>
+
+      <form id="gradeForm" class="form-stack modal-body-scroll">
+        <input type="hidden" id="gradeStudentId" />
+        <input type="hidden" id="gradeGroupId" />
+        <input type="hidden" id="gradeClassId" />
+
+        <div class="alert alert-info" id="peerSelfInfoBox">
+          Skor Self & Peer siswa akan tampil di sini.
+        </div>
+
+        <div class="aspect-grid" id="gradeAspectsGrid"></div>
+
+        <div class="score-summary-banner">
+          <div>
+            <span class="summary-label">Rata-rata Penilaian Guru & Predikat</span>
+            <p class="summary-predikat" id="modalPredikatText">Belum Dinilai</p>
+          </div>
+          <div class="summary-score-box">
+            <strong id="modalTeacherAvgText">0.00</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="gradeFeedbackInput">Catatan / Feedback Individu Siswa</label>
+          <textarea id="gradeFeedbackInput" rows="2" placeholder="Berikan apresiasi atau catatan perbaikan akting/artistik..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="gradeProjectNoteInput">Catatan Evaluasi Kelompok / Proyek</label>
+          <textarea id="gradeProjectNoteInput" rows="2" placeholder="Catatan umum untuk proyek kelompok ini..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="gradeModal">Batal</button>
+          <button type="submit" id="btnSaveGrade" class="btn btn-primary">Simpan Penilaian</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / UBAH TUGAS & DEADLINE OLEH GURU -->
+  <div id="guruTaskModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 id="guruTaskModalTitle">Beri Tugas & Tenggat Waktu</h3>
+          <p class="modal-subtitle">Tetapkan milestone dan batas waktu untuk kelompok</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="guruTaskModal">&times;</button>
+      </div>
+      <form id="guruTaskForm" class="form-stack">
+        <input type="hidden" id="guruEditTaskDocId" />
+        <div class="form-group">
+          <label for="guruTaskGroupSelect">Kelompok Tujuan <span class="required">*</span></label>
+          <select id="guruTaskGroupSelect" required></select>
+        </div>
+        <div class="form-group">
+          <label for="guruTaskTitleInput">Judul Tugas / Milestone <span class="required">*</span></label>
+          <input type="text" id="guruTaskTitleInput" placeholder="Contoh: Penyetoran Naskah Final & RAB" required />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="guruTaskStageSelect">Tahap Produksi</label>
+            <select id="guruTaskStageSelect">
+              <option value="PERSIAPAN">1. Persiapan</option>
+              <option value="PELAKSANAAN">2. Pelaksanaan</option>
+              <option value="PERTUNJUKAN">3. Pertunjukan</option>
+              <option value="PASCA">4. Pasca-Produksi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="guruTaskDeadlineInput">Tenggat Waktu (Deadline) <span class="required">*</span></label>
+            <input type="date" id="guruTaskDeadlineInput" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="guruTaskRoleInput">Divisi Sasaran (Opsional)</label>
+          <select id="guruTaskRoleInput"><option value="">Semua Divisi</option></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="guruTaskModal">Batal</button>
+          <button type="submit" id="btnSaveGuruTask" class="btn btn-primary">Simpan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL GALERI FOTO & PROFIL E-PROGRAM BUKU ACARA -->
+  <div id="eProgramModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="eProgModalTitle">Buku Acara & Galeri Kerabat Kerja</h3>
+          <p class="modal-subtitle" id="eProgModalSub">Profil produksi, sinopsis lakon, dan susunan pemeran/kru</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="eProgramModal">&times;</button>
+      </div>
+      <div id="eProgModalBody" class="form-stack modal-body-scroll"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close="eProgramModal">Tutup</button>
+        <button type="button" id="btnModalDownloadEProgDocx" class="btn btn-success">Unduh Buku Acara (.DOCX)</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      COLS,
+      RUBRIC_ASPECTS,
+      PRODUCTION_STAGES,
+      THEATRE_ROLES,
+      DOC_TEMPLATES,
+      getRoleMetadata,
+      computeMemberAttendance,
+      requireAuthRole,
+      logoutUser,
+      fetchAllCollection,
+      saveDocument,
+      removeDocument,
+      getRubricWeights,
+      getDriveFolders,
+      calculateAspectAverage,
+      getPredikat,
+      computeStudent360Summary,
+      exportGradeRecapCSV,
+      exportProductionDocx,
+      exportIndividualReportDocx,
+      exportEProgramDocx,
+      compressImageFile,
+      renderAvatarHtml,
+      getDeadlineStatus,
+      formatIndoDate,
+      formatRupiah,
+      buildWaReminderUrl,
+      changeOwnPassword,
+      confirmDialog,
+      showLoader,
+      showToast,
+      escapeHtml
+    } from "./js/app.js";
+
+    let currentUser = null;
+    let activeEProgramGroup = null;
+    let state = {
+      users: [],
+      classes: [],
+      groups: [],
+      tasks: [],
+      assessments: [],
+      stages: [],
+      scripts: [],
+      references: [],
+      submissions: [],
+      broadcasts: [],
+      attendance: [],
+      blocking: [],
+      finance: [],
+      weights: { self: 15, peer: 25, teacher: 60 },
+      driveFolders: []
+    };
+
+    // Validasi akses khusus peran TEACHER
+    requireAuthRole(["TEACHER"], async (profile) => {
+      currentUser = profile;
+      document.getElementById("teacherNameDisplay").textContent = profile.name;
+      document.getElementById("teacherAvatarTopbar").innerHTML = renderAvatarHtml(profile, 28);
+      validateTeacherWhatsapp();
+      bindEvents();
+      await loadGuruData();
+    });
+
+    // Memeriksa kelengkapan & format nomor WhatsApp Guru
+    function validateTeacherWhatsapp() {
+      const wa = String(currentUser.whatsapp || "").trim();
+      const isValid = /^(08|628|\+628)[0-9]{7,13}$/.test(wa);
+      document.getElementById("waRequiredBanner").classList.toggle("hidden", isValid);
+    }
+
+    function getMyIds() {
+      return new Set([currentUser.id, currentUser.docId, currentUser.authUid].filter(Boolean));
+    }
+
+    function getMyGroups() {
+      const myIds = getMyIds();
+      const myClasses = state.classes.filter((c) => myIds.has(c.teacherId) || (c.id || c.docId) === currentUser.classId);
+      const myClassIds = new Set(myClasses.map((c) => c.id || c.docId));
+
+      return state.groups.filter(
+        (g) => myIds.has(g.teacherId) || myClassIds.has(g.classId)
+      );
+    }
+
+    function getMyStudents() {
+      const myGroupIds = new Set(getMyGroups().map((g) => g.id || g.docId));
+      return state.users.filter(
+        (u) => (u.role === "STUDENT" || u.role === "LEADER") && myGroupIds.has(u.groupId)
+      );
+    }
+
+    async function loadGuruData() {
+      showLoader(true, "Memuat data kelompok binaan...");
+      try {
+        const [
+          users, classes, groups, tasks, assessments, stages, scripts, references,
+          submissions, broadcasts, attendance, blocking, finance, weights, driveFolders
+        ] = await Promise.all([
+          fetchAllCollection(COLS.USERS),
+          fetchAllCollection(COLS.CLASSES),
+          fetchAllCollection(COLS.GROUPS),
+          fetchAllCollection(COLS.TASKS),
+          fetchAllCollection(COLS.ASSESSMENTS),
+          fetchAllCollection(COLS.STAGES),
+          fetchAllCollection(COLS.SCRIPTS),
+          fetchAllCollection(COLS.REFERENCES),
+          fetchAllCollection(COLS.SUBMISSIONS),
+          fetchAllCollection(COLS.BROADCASTS),
+          fetchAllCollection(COLS.ATTENDANCE),
+          fetchAllCollection(COLS.BLOCKING),
+          fetchAllCollection(COLS.FINANCE),
+          getRubricWeights(),
+          getDriveFolders()
+        ]);
+
+        state = {
+          users, classes, groups, tasks, assessments, stages, scripts, references,
+          submissions, broadcasts, attendance, blocking, finance, weights, driveFolders
+        };
+        populateSelects();
+        renderKpis();
+        renderProjectsAndStudents();
+        renderTasksAndStages();
+        renderCrewAndDocs();
+        renderStudio();
+        renderProfileAndDrive();
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal memuat data guru: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById("btnLogout").addEventListener("click", logoutUser);
+      document.getElementById("btnPrintGuru").addEventListener("click", () => window.print());
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-pane").forEach((p) => p.classList.add("hidden"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.tab).classList.remove("hidden");
+        });
+      });
+
+      document.getElementById("btnFocusProfileTab").addEventListener("click", () => {
+        document.querySelector('[data-tab="tabProfile"]').click();
+        document.getElementById("guruProfileWa").focus();
+      });
+
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.getElementById(btn.dataset.close).classList.add("hidden");
+        });
+      });
+
+      document.getElementById("filterGuruGroup").addEventListener("change", renderProjectsAndStudents);
+      document.getElementById("filterGuruStatus").addEventListener("change", renderProjectsAndStudents);
+      document.getElementById("filterGuruSearch").addEventListener("input", renderProjectsAndStudents);
+
+      document.getElementById("filterGuruTaskGroup").addEventListener("change", renderTasksAndStages);
+      document.getElementById("filterGuruTaskDeadline").addEventListener("change", renderTasksAndStages);
+
+      document.getElementById("btnOpenGuruTaskModal").addEventListener("click", () => openGuruTaskModal(null));
+      document.getElementById("guruTaskForm").addEventListener("submit", handleSaveGuruTask);
+
+      document.getElementById("btnExportGuruCsv").addEventListener("click", () => {
+        const myGroups = getMyGroups();
+        const rows = [];
+        myGroups.forEach((g) => {
+          const gId = g.id || g.docId;
+          const cls = state.classes.find((c) => (c.id || c.docId) === g.classId);
+          const members = getMyStudents().filter((s) => s.groupId === gId);
+          members.forEach((s) => {
+            const sum = computeStudent360Summary(s, state.assessments, state.weights);
+            const sc = sum.latestTeacher?.scores || {};
+            rows.push({
+              studentName: s.name,
+              nis: s.nis || "-",
+              className: cls ? cls.name : "-",
+              groupName: `${g.name} (${g.title})`,
+              roleName: s.roleId || (s.role === "LEADER" ? "Pimpinan Produksi" : "Anggota"),
+              disiplin: sum.isGradedByTeacher ? sc.disiplin : "-",
+              kolaborasi: sum.isGradedByTeacher ? sc.kolaborasi : "-",
+              kualitas: sum.isGradedByTeacher ? sc.kualitas : "-",
+              tanggungJawab: sum.isGradedByTeacher ? sc.tanggungJawab : "-",
+              teacherAvg: sum.teacherAvg ?? "-",
+              selfAvg: sum.selfAvg ?? "-",
+              peerAvg: sum.peerAvg ?? "-",
+              finalScore: sum.finalScore,
+              predikat: sum.predikat,
+              isGraded: sum.isGradedByTeacher,
+              feedback: sum.latestTeacher?.feedback || "-"
+            });
+          });
+        });
+
+        if (!rows.length) {
+          showToast("Belum ada data siswa pada proyek yang Anda ampu.", "warning");
+          return;
+        }
+        exportGradeRecapCSV(rows, `nilai_teater_guru_${new Date().toISOString().slice(0, 10)}.csv`);
+        showToast("Rekap nilai CSV berhasil diunduh.", "success");
+      });
+
+      document.getElementById("gradeForm").addEventListener("submit", handleSaveGrade);
+      document.getElementById("guruProfileForm").addEventListener("submit", handleSaveProfile);
+      document.getElementById("guruPasswordForm").addEventListener("submit", handleChangeGuruPassword);
+      document.getElementById("guruBroadcastForm").addEventListener("submit", handleSendBroadcast);
+      document.getElementById("guruRefForm").addEventListener("submit", handleAddReference);
+      document.getElementById("btnGuruCarryOver").addEventListener("click", handleGuruCarryOver);
+
+      document.getElementById("guruProfileAvatarFile").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const dataUrl = await compressImageFile(file, 280, 0.72);
+          document.getElementById("removeGuruAvatarFlag").value = "false";
+          document.getElementById("guruAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: currentUser.name, avatarUrl: dataUrl }, 48);
+          document.getElementById("btnRemoveGuruAvatar").classList.remove("hidden");
+        } catch (err) {
+          showToast(err.message, "warning");
+        }
+      });
+
+      document.getElementById("btnRemoveGuruAvatar").addEventListener("click", () => {
+        document.getElementById("guruProfileAvatarFile").value = "";
+        document.getElementById("removeGuruAvatarFlag").value = "true";
+        document.getElementById("guruAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: currentUser.name, avatarUrl: "" }, 48);
+        document.getElementById("btnRemoveGuruAvatar").classList.add("hidden");
+      });
+
+      document.getElementById("btnModalDownloadEProgDocx").addEventListener("click", async () => {
+        if (!activeEProgramGroup) return;
+        const g = activeEProgramGroup;
+        const gId = g.id || g.docId;
+        const cls = state.classes.find((c) => (c.id || c.docId) === g.classId);
+        const members = getMyStudents().filter((s) => s.groupId === gId);
+        const script = state.scripts.find((s) => s.groupId === gId);
+        await exportEProgramDocx({
+          group: g,
+          className: cls?.name || "-",
+          members,
+          script,
+          teacherName: currentUser.name
+        });
+        showToast("E-Program Buku Acara (.docx) berhasil diunduh.", "success");
+      });
+    }
+
+    function populateSelects() {
+      const myGroups = getMyGroups();
+      const myClassIds = new Set(myGroups.map((g) => g.classId));
+      const myClasses = state.classes.filter((c) => myClassIds.has(c.id || c.docId) || getMyIds().has(c.teacherId));
+
+      const grpOpts = myGroups
+        .map((g) => `<option value="${escapeHtml(g.id || g.docId)}">${escapeHtml(g.name)} — ${escapeHtml(g.title)}</option>`)
+        .join("");
+
+      document.getElementById("filterGuruGroup").innerHTML =
+        `<option value="">Semua Proyek Diampu (${myGroups.length})</option>${grpOpts}`;
+      document.getElementById("filterGuruTaskGroup").innerHTML =
+        `<option value="">Semua Kelompok (${myGroups.length})</option>${grpOpts}`;
+
+      const clsOpts = myClasses.map((c) => `<option value="${escapeHtml(c.id || c.docId)}">${escapeHtml(c.name)}</option>`).join("");
+      document.getElementById("refClassInput").innerHTML = `<option value="">-- Pilih Kelas --</option>${clsOpts}`;
+      document.getElementById("guruBcClass").innerHTML = `<option value="">Semua Kelas Binaan</option>${clsOpts}`;
+
+      document.getElementById("guruTaskRoleInput").innerHTML =
+        `<option value="">Semua Divisi</option>` +
+        THEATRE_ROLES.map((r) => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("");
+    }
+
+    function renderKpis() {
+      const myGroups = getMyGroups();
+      const myStudents = getMyStudents();
+      const myClassIds = new Set(myGroups.map((g) => g.classId));
+      const summaries = myStudents.map((s) => computeStudent360Summary(s, state.assessments, state.weights));
+      const graded = summaries.filter((x) => x.isGradedByTeacher).length;
+      const pct = myStudents.length ? Math.round((graded / myStudents.length) * 100) : 0;
+      const avg = summaries.length
+        ? (summaries.reduce((a, b) => a + b.finalScore, 0) / summaries.length).toFixed(2)
+        : "0.00";
+
+      document.getElementById("kpiMyGroups").textContent = myGroups.length;
+      document.getElementById("kpiMyClasses").textContent = `${myClassIds.size} Kelas Binaan`;
+      document.getElementById("kpiMyStudents").textContent = myStudents.length;
+      document.getElementById("kpiGradingProgress").textContent = `${pct}% (${graded}/${myStudents.length})`;
+      document.getElementById("kpiGradingBar").style.width = `${pct}%`;
+      document.getElementById("kpiMyAvgScore").textContent = avg;
+      document.getElementById("kpiWeightLabel").textContent =
+        `Bobot: Self ${state.weights.self}% • Peer ${state.weights.peer}% • Guru ${state.weights.teacher}%`;
+    }
+
+    function renderProjectsAndStudents() {
+      const container = document.getElementById("assignedProjectsContainer");
+      const grpFilter = document.getElementById("filterGuruGroup").value;
+      const statusFilter = document.getElementById("filterGuruStatus").value;
+      const q = document.getElementById("filterGuruSearch").value.trim().toLowerCase();
+
+      const groups = getMyGroups().filter((g) => !grpFilter || (g.id || g.docId) === grpFilter);
+
+      if (!groups.length) {
+        container.innerHTML = `<div class="empty-state">Belum ada proyek/kelompok teater yang ditugaskan kepada Anda. Hubungi Admin untuk penugasan proyek.</div>`;
+        return;
+      }
+
+      container.innerHTML = groups.map((g) => {
+        const gId = g.id || g.docId;
+        const cls = state.classes.find((c) => (c.id || c.docId) === g.classId);
+        const allMembers = getMyStudents().filter((s) => s.groupId === gId);
+        const groupSessions = state.attendance.filter((a) => a.groupId === gId);
+        const gradedTotal = allMembers.filter((s) => computeStudent360Summary(s, state.assessments, state.weights).isGradedByTeacher).length;
+        const pct = allMembers.length ? Math.round((gradedTotal / allMembers.length) * 100) : 0;
+
+        const filteredMembers = allMembers.filter((s) => {
+          const sum = computeStudent360Summary(s, state.assessments, state.weights);
+          if (statusFilter === "GRADED" && !sum.isGradedByTeacher) return false;
+          if (statusFilter === "UNGRADED" && sum.isGradedByTeacher) return false;
+          if (q) {
+            const hay = `${s.name} ${s.nis || ""} ${s.roleId || ""}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+
+        const rowsHtml = filteredMembers.length
+          ? filteredMembers.map((s) => {
+              const sum = computeStudent360Summary(s, state.assessments, state.weights);
+              const att = computeMemberAttendance(s, groupSessions);
+              const sc = sum.latestTeacher?.scores || {};
+              return `
+                <tr>
+                  <td>
+                    <strong>${escapeHtml(s.name)}</strong><br>
+                    <span class="text-muted">NIS: ${escapeHtml(s.nis || "-")} • Hadir: ${att.percentage}%</span>
+                  </td>
+                  <td>${escapeHtml(s.roleId || (s.role === "LEADER" ? "Pimpinan Produksi" : "Anggota"))}</td>
+                  <td class="num">${sum.isGradedByTeacher ? sc.disiplin : "-"}</td>
+                  <td class="num">${sum.isGradedByTeacher ? sc.kolaborasi : "-"}</td>
+                  <td class="num">${sum.isGradedByTeacher ? sc.kualitas : "-"}</td>
+                  <td class="num">${sum.isGradedByTeacher ? sc.tanggungJawab : "-"}</td>
+                  <td class="num">${sum.selfAvg ?? "-"} / ${sum.peerAvg ?? "-"}</td>
+                  <td class="num"><strong>${sum.finalScore}</strong></td>
+                  <td>
+                    <span class="badge ${sum.isGradedByTeacher ? "badge-success" : "badge-warning"}">
+                      ${sum.isGradedByTeacher ? "Sudah Dinilai" : "Belum Dinilai"}
+                    </span>
+                  </td>
+                  <td class="actions-col">
+                    <div class="action-group">
+                      <button type="button" class="btn btn-primary btn-xs" data-grade-student="${escapeHtml(s.docId)}" data-group-id="${escapeHtml(gId)}">
+                        ${sum.isGradedByTeacher ? "Ubah Nilai" : "Beri Nilai"}
+                      </button>
+                      <button type="button" class="btn btn-outline btn-xs" data-rapor-student="${escapeHtml(s.docId)}" data-group-id="${escapeHtml(gId)}">
+                        Rapor .DOCX
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")
+          : `<tr><td colspan="10" class="text-center text-muted">Tidak ada anggota kelompok yang sesuai filter.</td></tr>`;
+
+        return `
+          <article class="project-card">
+            <div class="project-card-header">
+              <div>
+                <div class="project-badges">
+                  <span class="badge badge-info">${escapeHtml(cls ? cls.name : "Kelas")}</span>
+                  <span class="badge badge-neutral">${allMembers.length} Anggota</span>
+                </div>
+                <h3 class="project-card-title">${escapeHtml(g.name)} — "${escapeHtml(g.title)}"</h3>
+                <p class="panel-desc">${escapeHtml(g.synopsis || "Tidak ada sinopsis.")}</p>
+              </div>
+              <div class="project-progress-box">
+                <div class="project-progress-meta">
+                  <span>Progres Dinilai</span>
+                  <strong>${gradedTotal}/${allMembers.length} (${pct}%)</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama Siswa & Presensi</th>
+                    <th>Peran / Divisi</th>
+                    <th class="num">Disiplin</th>
+                    <th class="num">Kolaborasi</th>
+                    <th class="num">Kualitas</th>
+                    <th class="num">T. Jawab</th>
+                    <th class="num">Self / Peer</th>
+                    <th class="num">Nilai Akhir</th>
+                    <th>Status</th>
+                    <th class="actions-col">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      container.querySelectorAll("[data-grade-student]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const student = state.users.find((u) => u.docId === btn.dataset.gradeStudent);
+          const group = state.groups.find((g) => (g.id || g.docId) === btn.dataset.groupId);
+          if (student && group) openGradeModal(student, group);
+        });
+      });
+
+      container.querySelectorAll("[data-rapor-student]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const student = state.users.find((u) => u.docId === btn.dataset.raporStudent);
+          const group = state.groups.find((g) => (g.id || g.docId) === btn.dataset.groupId);
+          if (!student || !group) return;
+          const cls = state.classes.find((c) => (c.id || c.docId) === group.classId);
+          const sum = computeStudent360Summary(student, state.assessments, state.weights);
+          const att = computeMemberAttendance(student, state.attendance.filter((a) => a.groupId === (group.id || group.docId)));
+          try {
+            await exportIndividualReportDocx({
+              student,
+              className: cls?.name || "-",
+              groupName: group.name,
+              productionTitle: group.title,
+              teacherName: currentUser.name,
+              summary360: sum,
+              attendanceStats: att,
+              weights: state.weights
+            });
+            showToast(`Rapor individu ${student.name} (.docx) berhasil diunduh.`, "success");
+          } catch (err) {
+            showToast(err.message, "danger");
+          }
+        });
+      });
+    }
+
+    function openGradeModal(student, group) {
+      const sum = computeStudent360Summary(student, state.assessments, state.weights);
+      const groupSessions = state.attendance.filter((a) => a.groupId === (group.id || group.docId));
+      const att = computeMemberAttendance(student, groupSessions);
+
+      const existingScores = sum.latestTeacher?.scores || {
+        disiplin: 80,
+        kolaborasi: 80,
+        kualitas: 80,
+        tanggungJawab: 80
+      };
+
+      document.getElementById("gradeStudentId").value = student.id || student.docId;
+      document.getElementById("gradeGroupId").value = group.id || group.docId;
+      document.getElementById("gradeClassId").value = group.classId || student.classId || "";
+      document.getElementById("gradeModalTitle").textContent = `Penilaian: ${student.name}`;
+      document.getElementById("gradeModalSub").textContent =
+        `${group.name} (${group.title}) • Peran: ${student.roleId || "Anggota"}`;
+
+      document.getElementById("peerSelfInfoBox").innerHTML =
+        `<strong>Rujukan Objektif Siswa Ini:</strong><br>` +
+        `• <strong>Presensi Latihan (Acuan Disiplin):</strong> Hadir ${att.present}x, Terlambat ${att.late}x, Izin ${att.excused}x, Alpa ${att.absent}x (<strong>${att.percentage}%</strong> dari ${att.totalSessions} sesi)<br>` +
+        `• <strong>Penilaian 360°:</strong> Self: <strong>${sum.selfAvg ?? "Belum isi"}</strong> • Peer: <strong>${sum.peerAvg ?? "Belum ada"} (${sum.peerCount} penilai)</strong> • Bobot Guru: <strong>${state.weights.teacher}%</strong>`;
+
+      const grid = document.getElementById("gradeAspectsGrid");
+      grid.innerHTML = RUBRIC_ASPECTS.map((asp) => {
+        const val = Number(existingScores[asp.key] ?? 80);
+        return `
+          <div class="aspect-box">
+            <div class="aspect-head">
+              <label for="num_${asp.key}">${escapeHtml(asp.label)}</label>
+              <input type="number" id="num_${asp.key}" class="score-number" min="0" max="100" value="${val}" required />
+            </div>
+            <p class="aspect-desc">${escapeHtml(asp.desc)}</p>
+            <input type="range" id="rng_${asp.key}" class="score-range" min="0" max="100" value="${val}" />
+            <div class="field-hint" id="lvl_${asp.key}" style="margin-top:6px;"></div>
+          </div>
+        `;
+      }).join("");
+
+      RUBRIC_ASPECTS.forEach((asp) => {
+        const numEl = document.getElementById(`num_${asp.key}`);
+        const rngEl = document.getElementById(`rng_${asp.key}`);
+        numEl.addEventListener("input", () => {
+          const v = Math.max(0, Math.min(100, Number(numEl.value || 0)));
+          rngEl.value = v;
+          updateModalLiveScore();
+        });
+        rngEl.addEventListener("input", () => {
+          numEl.value = rngEl.value;
+          updateModalLiveScore();
+        });
+      });
+
+      document.getElementById("gradeFeedbackInput").value = sum.latestTeacher?.feedback || "";
+      document.getElementById("gradeProjectNoteInput").value = sum.latestTeacher?.projectNote || "";
+      updateModalLiveScore();
+      document.getElementById("gradeModal").classList.remove("hidden");
+    }
+
+    function updateModalLiveScore() {
+      const scores = {};
+      RUBRIC_ASPECTS.forEach((asp) => {
+        const v = Number(document.getElementById(`num_${asp.key}`).value || 0);
+        scores[asp.key] = v;
+        const lvlEl = document.getElementById(`lvl_${asp.key}`);
+        if (lvlEl && asp.levels) {
+          if (v >= 90) lvlEl.textContent = asp.levels.excellent;
+          else if (v >= 80) lvlEl.textContent = asp.levels.good;
+          else if (v >= 70) lvlEl.textContent = asp.levels.fair;
+          else lvlEl.textContent = asp.levels.poor;
+        }
+      });
+      const avg = calculateAspectAverage(scores);
+      document.getElementById("modalTeacherAvgText").textContent = avg.toFixed(2);
+      document.getElementById("modalPredikatText").textContent = `Predikat: ${getPredikat(avg)}`;
+    }
+
+    async function handleSaveGrade(e) {
+      e.preventDefault();
+      const targetUserId = document.getElementById("gradeStudentId").value;
+      const groupId = document.getElementById("gradeGroupId").value;
+      const classId = document.getElementById("gradeClassId").value;
+      const feedback = document.getElementById("gradeFeedbackInput").value.trim();
+      const projectNote = document.getElementById("gradeProjectNoteInput").value.trim();
+
+      const scores = {};
+      for (const asp of RUBRIC_ASPECTS) {
+        const val = Number(document.getElementById(`num_${asp.key}`).value);
+        if (Number.isNaN(val) || val < 0 || val > 100) {
+          showToast(`Nilai aspek ${asp.label} harus berada di antara 0 sampai 100.`, "warning");
+          return;
+        }
+        scores[asp.key] = val;
+      }
+
+      const btn = document.getElementById("btnSaveGrade");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan penilaian ke database...");
+
+      try {
+        const assessDocId = `teacher_${currentUser.docId}_${targetUserId}`;
+        const avg = calculateAspectAverage(scores);
+
+        await saveDocument(COLS.ASSESSMENTS, assessDocId, {
+          id: assessDocId,
+          targetUserId,
+          evaluatorId: currentUser.docId,
+          evaluatorName: currentUser.name,
+          evaluatorType: "TEACHER",
+          classId,
+          groupId,
+          scores,
+          average: avg,
+          feedback,
+          projectNote
+        });
+
+        document.getElementById("gradeModal").classList.add("hidden");
+        showToast("Penilaian siswa berhasil disimpan.", "success");
+        await loadGuruData();
+      } catch (err) {
+        showToast("Gagal menyimpan penilaian: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    function openGuruTaskModal(taskObj) {
+      const myGroups = getMyGroups();
+      if (!myGroups.length) {
+        showToast("Belum ada kelompok yang Anda ampu.", "warning");
+        return;
+      }
+
+      const isEdit = Boolean(taskObj);
+      document.getElementById("guruTaskModalTitle").textContent = isEdit
+        ? "Ubah Tenggat Waktu / Tugas"
+        : "Beri Tugas & Tenggat Waktu";
+      document.getElementById("guruEditTaskDocId").value = isEdit ? taskObj.docId : "";
+
+      const groupSel = document.getElementById("guruTaskGroupSelect");
+      groupSel.innerHTML =
+        (isEdit ? "" : `<option value="ALL_MY_GROUPS">-- Semua Kelompok Binaan (${myGroups.length}) --</option>`) +
+        myGroups.map((g) => `<option value="${escapeHtml(g.id || g.docId)}">${escapeHtml(g.name)} — ${escapeHtml(g.title)}</option>`).join("");
+
+      if (isEdit) {
+        groupSel.value = taskObj.groupId || "";
+        groupSel.disabled = true;
+        document.getElementById("guruTaskTitleInput").value = taskObj.title || "";
+        document.getElementById("guruTaskStageSelect").value = taskObj.stage || "PERSIAPAN";
+        document.getElementById("guruTaskDeadlineInput").value = taskObj.deadline || "";
+        document.getElementById("guruTaskRoleInput").value = taskObj.roleId || "";
+      } else {
+        groupSel.disabled = false;
+        document.getElementById("guruTaskForm").reset();
+      }
+      document.getElementById("guruTaskModal").classList.remove("hidden");
+    }
+
+    async function handleSaveGuruTask(e) {
+      e.preventDefault();
+      const editDocId = document.getElementById("guruEditTaskDocId").value;
+      const targetGroup = document.getElementById("guruTaskGroupSelect").value;
+      const title = document.getElementById("guruTaskTitleInput").value.trim();
+      const stage = document.getElementById("guruTaskStageSelect").value;
+      const deadline = document.getElementById("guruTaskDeadlineInput").value;
+      const roleId = document.getElementById("guruTaskRoleInput").value;
+
+      if (!title || !deadline) {
+        showToast("Judul tugas dan tenggat waktu wajib diisi.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSaveGuruTask");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan tugas & tenggat...");
+      try {
+        if (editDocId) {
+          await saveDocument(COLS.TASKS, editDocId, { title, stage, deadline, roleId });
+          showToast("Tenggat waktu dan tugas berhasil diperbarui.", "success");
+        } else {
+          const targetGroups = targetGroup === "ALL_MY_GROUPS"
+            ? getMyGroups()
+            : getMyGroups().filter((g) => (g.id || g.docId) === targetGroup);
+
+          for (const g of targetGroups) {
+            const gId = g.id || g.docId;
+            const docId = `task_guru_${Date.now()}_${gId}`;
+            await saveDocument(COLS.TASKS, docId, {
+              id: docId,
+              title,
+              stage,
+              status: "TODO",
+              classId: g.classId || "",
+              groupId: gId,
+              assigneeId: g.leaderId || "",
+              roleId,
+              deadline,
+              createdBy: currentUser.name
+            });
+          }
+          showToast(`Tugas dan tenggat berhasil dikirim ke ${targetGroups.length} kelompok.`, "success");
+        }
+        document.getElementById("guruTaskModal").classList.add("hidden");
+        await loadGuruData();
+      } catch (err) {
+        showToast("Gagal menyimpan tugas: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    function renderTasksAndStages() {
+      const strip = document.getElementById("guruStagesStrip");
+      strip.innerHTML = PRODUCTION_STAGES.map((st) => {
+        const saved = state.stages.find((x) => x.stage === st.key || x.docId === st.key) || {};
+        const dl = getDeadlineStatus(saved.endDate, false);
+        return `
+          <div class="mini-summary-card ${saved.isActive ? "stage-highlight" : ""}">
+            <div class="mini-summary-head">
+              <strong>${escapeHtml(st.label)}</strong>
+              <span class="badge ${saved.isActive ? "badge-success" : "badge-neutral"}">${saved.isActive ? "AKTIF" : "Tahap"}</span>
+            </div>
+            <div class="mini-summary-sub">
+              ${escapeHtml(formatIndoDate(saved.startDate))} s.d. <strong>${escapeHtml(formatIndoDate(saved.endDate))}</strong>
+            </div>
+            ${saved.endDate ? `<div style="margin-top:4px;"><span class="badge ${dl.badgeClass}">${escapeHtml(dl.label)}</span></div>` : ""}
+          </div>
+        `;
+      }).join("");
+
+      const myGroupIds = new Set(getMyGroups().map((g) => g.id || g.docId));
+      const grpFilter = document.getElementById("filterGuruTaskGroup").value;
+      const dlFilter = document.getElementById("filterGuruTaskDeadline").value;
+
+      const myTasks = state.tasks
+        .filter((t) => myGroupIds.has(t.groupId))
+        .filter((t) => !grpFilter || t.groupId === grpFilter)
+        .filter((t) => {
+          const dl = getDeadlineStatus(t.deadline, t.status === "DONE");
+          if (dlFilter === "OVERDUE") return dl.isOverdue;
+          if (dlFilter === "URGENT") return dl.isUrgent;
+          if (dlFilter === "PENDING") return t.status !== "DONE";
+          if (dlFilter === "DONE") return t.status === "DONE";
+          return true;
+        })
+        .sort((a, b) => {
+          const da = getDeadlineStatus(a.deadline, a.status === "DONE");
+          const db = getDeadlineStatus(b.deadline, b.status === "DONE");
+          return da.sortOrder - db.sortOrder || da.daysDiff - db.daysDiff;
+        });
+
+      document.getElementById("guruTaskMeta").textContent = `Menampilkan ${myTasks.length} tugas kelompok`;
+      const tbody = document.getElementById("guruTasksTableBody");
+
+      tbody.innerHTML = myTasks.length
+        ? myTasks.map((t) => {
+            const grp = state.groups.find((g) => (g.id || g.docId) === t.groupId);
+            const members = getMyStudents().filter((s) => s.groupId === t.groupId);
+            const pic = members.find((u) => (u.id || u.docId) === t.assigneeId) || members.find((u) => u.role === "LEADER");
+            const dl = getDeadlineStatus(t.deadline, t.status === "DONE");
+            const badgeCls = t.status === "DONE" ? "badge-success" : t.status === "IN_PROGRESS" ? "badge-info" : "badge-warning";
+            const waUrl = pic && t.status !== "DONE"
+              ? buildWaReminderUrl(pic.whatsapp, pic.name, t.title, t.deadline, grp?.name || "")
+              : "";
+
+            return `
+              <tr class="${dl.isOverdue ? "row-overdue" : ""}">
+                <td><strong>${escapeHtml(t.title)}</strong></td>
+                <td><span class="badge badge-neutral">${escapeHtml(t.stage || "PERSIAPAN")}</span></td>
+                <td>${escapeHtml(grp ? grp.name : "-")}</td>
+                <td>${escapeHtml(t.roleId || (pic ? pic.name : "Semua Tim"))}</td>
+                <td>
+                  ${escapeHtml(formatIndoDate(t.deadline))}
+                  <div style="margin-top:3px;"><span class="badge ${dl.badgeClass}">${escapeHtml(dl.label)}</span></div>
+                </td>
+                <td><span class="badge ${badgeCls}">${escapeHtml(t.status || "TODO")}</span></td>
+                <td class="actions-col">
+                  <div class="action-group">
+                    <button type="button" class="btn btn-outline btn-xs" data-edit-guru-task="${escapeHtml(t.docId)}">Ubah Tenggat</button>
+                    ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="btn btn-warning btn-xs">Ingatkan WA</a>` : ""}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="7" class="text-center text-muted">Tidak ada tugas produksi yang sesuai filter.</td></tr>`;
+
+      tbody.querySelectorAll("[data-edit-guru-task]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const task = state.tasks.find((x) => x.docId === btn.dataset.editGuruTask);
+          if (task) openGuruTaskModal(task);
+        });
+      });
+    }
+
+    async function handleGuruCarryOver() {
+      const activeStage = state.stages.find((s) => s.isActive);
+      if (!activeStage) {
+        showToast("Belum ada tahapan produksi yang ditandai aktif oleh Admin.", "warning");
+        return;
+      }
+      const activeKey = activeStage.stage || activeStage.docId;
+      const myGroupIds = new Set(getMyGroups().map((g) => g.id || g.docId));
+      const pending = state.tasks.filter((t) => myGroupIds.has(t.groupId) && t.status !== "DONE" && t.stage !== activeKey);
+
+      if (!pending.length) {
+        showToast("Tidak ada tugas tertunda pada kelompok Anda.", "info");
+        return;
+      }
+
+      const ok = await confirmDialog(
+        "Carry Over Tugas Kelompok",
+        `Pindahkan ${pending.length} tugas yang belum selesai ke tahap aktif (${activeKey})?`,
+        "Pindahkan",
+        false
+      );
+      if (!ok) return;
+
+      showLoader(true, "Memindahkan tugas tertunda...");
+      try {
+        for (const t of pending) {
+          await saveDocument(COLS.TASKS, t.docId, { stage: activeKey });
+        }
+        showToast(`${pending.length} tugas berhasil dipindahkan ke ${activeKey}.`, "success");
+        await loadGuruData();
+      } catch (err) {
+        showToast("Gagal memindahkan tugas: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function renderCrewAndDocs() {
+      const myGroups = getMyGroups();
+      const crewGrid = document.getElementById("guruCrewGrid");
+
+      crewGrid.innerHTML = myGroups.length
+        ? myGroups.map((g) => {
+            const gId = g.id || g.docId;
+            const members = getMyStudents().filter((s) => s.groupId === gId);
+            const sessions = state.attendance.filter((a) => a.groupId === gId);
+            const grpFin = state.finance.filter((f) => f.groupId === gId);
+            const finIn = grpFin.filter((f) => f.type === "IN").reduce((a, b) => a + Number(b.amount || 0), 0);
+            const finOut = grpFin.filter((f) => f.type === "OUT").reduce((a, b) => a + Number(b.amount || 0), 0);
+
+            const listHtml = members.map((m) => {
+              const waClean = String(m.whatsapp || "").replace(/^0/, "62").replace(/[^0-9]/g, "");
+              const att = computeMemberAttendance(m, sessions);
+              const meta = getRoleMetadata(m.roleId, m.role);
+              const waBtn = waClean
+                ? `<a href="https://wa.me/${waClean}" target="_blank" rel="noopener" class="btn btn-outline btn-xs">WA</a>`
+                : "";
+              return `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                    ${renderAvatarHtml(m, 34)}
+                    <div>
+                      <strong>${escapeHtml(m.name)}</strong>
+                      <div class="field-hint">${escapeHtml(m.roleId || m.role)} (${escapeHtml(meta.categoryLabel)}) • Hadir ${att.percentage}%</div>
+                    </div>
+                  </div>
+                  ${waBtn}
+                </div>
+              `;
+            }).join("");
+
+            return `
+              <div class="feature-card">
+                <div>
+                  <h4>${escapeHtml(g.name)}</h4>
+                  <p style="margin-bottom:6px;">Lakon: ${escapeHtml(g.title)}</p>
+                  <p style="margin-bottom:10px;font-size:11px;">Kas: Masuk ${formatRupiah(finIn)} • Keluar ${formatRupiah(finOut)}</p>
+                  ${listHtml || '<p class="text-muted">Belum ada anggota.</p>'}
+                </div>
+                <div class="action-group">
+                  <button type="button" class="btn btn-primary btn-xs" data-preview-eprogram="${escapeHtml(gId)}">
+                    Galeri E-Program
+                  </button>
+                  <button type="button" class="btn btn-outline btn-xs" data-guru-eprogram="${escapeHtml(gId)}">
+                    Unduh .DOCX
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<div class="empty-state">Belum ada kelompok binaan.</div>`;
+
+      crewGrid.querySelectorAll("[data-preview-eprogram]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const g = myGroups.find((x) => (x.id || x.docId) === btn.dataset.previewEprogram);
+          if (g) openEProgramGalleryModal(g);
+        });
+      });
+
+      crewGrid.querySelectorAll("[data-guru-eprogram]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const g = myGroups.find((x) => (x.id || x.docId) === btn.dataset.guruEprogram);
+          if (!g) return;
+          const gId = g.id || g.docId;
+          const cls = state.classes.find((c) => (c.id || c.docId) === g.classId);
+          const members = getMyStudents().filter((s) => s.groupId === gId);
+          const script = state.scripts.find((s) => s.groupId === gId);
+          try {
+            await exportEProgramDocx({
+              group: g,
+              className: cls?.name || "-",
+              members,
+              script,
+              teacherName: currentUser.name
+            });
+            showToast("E-Program Buku Acara (.docx) berhasil diunduh.", "success");
+          } catch (err) {
+            showToast(err.message, "danger");
+          }
+        });
+      });
+
+      const myGroupIds = new Set(myGroups.map((g) => g.id || g.docId));
+      const mySubs = state.submissions.filter((sub) => myGroupIds.has(sub.groupId));
+      const subBody = document.getElementById("guruSubmissionsBody");
+
+      subBody.innerHTML = mySubs.length
+        ? mySubs.map((sub) => {
+            const grp = state.groups.find((g) => (g.id || g.docId) === sub.groupId);
+            const tpl = DOC_TEMPLATES.find((t) => t.id === sub.templateId);
+            return `
+              <tr>
+                <td><strong>${escapeHtml(tpl?.code || "DOC")} — ${escapeHtml(sub.templateTitle)}</strong></td>
+                <td>${escapeHtml(sub.category || tpl?.category || "Produksi")}</td>
+                <td>${escapeHtml(grp ? grp.name : "-")}</td>
+                <td>${escapeHtml(sub.submittedByName || "-")}</td>
+                <td>${sub.updatedAt ? new Date(sub.updatedAt).toLocaleString("id-ID") : "-"}</td>
+                <td class="actions-col">
+                  <button type="button" class="btn btn-primary btn-xs" data-dl-sub="${escapeHtml(sub.docId)}">Unduh .DOCX</button>
+                </td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="6" class="text-center text-muted">Belum ada dokumen produksi yang dikumpulkan siswa.</td></tr>`;
+
+      subBody.querySelectorAll("[data-dl-sub]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const sub = mySubs.find((x) => x.docId === btn.dataset.dlSub);
+          if (!sub) return;
+          const grp = state.groups.find((g) => (g.id || g.docId) === sub.groupId);
+          const cls = state.classes.find((c) => (c.id || c.docId) === sub.classId);
+          const tpl = DOC_TEMPLATES.find((t) => t.id === sub.templateId);
+          try {
+            await exportProductionDocx({
+              docCode: tpl?.code || "DOC-SPPPT",
+              title: sub.templateTitle,
+              category: sub.category || tpl?.category || "Produksi Teater",
+              className: cls?.name || "-",
+              groupName: grp?.name || "-",
+              productionTitle: grp?.title || "-",
+              authorName: sub.submittedByName || "-",
+              meta: { teacherName: currentUser.name, ...(sub.meta || {}) },
+              introText: sub.introText || tpl?.defaultIntro || "",
+              columns: tpl?.columns || ["Kolom 1", "Kolom 2", "Kolom 3"],
+              rows: sub.rows || [],
+              calcConfig: tpl?.calcConfig || null,
+              currencyCols: tpl?.currencyCols || [],
+              signatories: tpl?.signatories || null,
+              notes: sub.notes || ""
+            });
+            showToast("File .docx berhasil diunduh.", "success");
+          } catch (err) {
+            showToast(err.message, "danger");
+          }
+        });
+      });
+    }
+
+    function openEProgramGalleryModal(group) {
+      activeEProgramGroup = group;
+      const gId = group.id || group.docId;
+      const cls = state.classes.find((c) => (c.id || c.docId) === group.classId);
+      const members = getMyStudents().filter((s) => s.groupId === gId);
+      const script = state.scripts.find((s) => s.groupId === gId);
+
+      document.getElementById("eProgModalTitle").textContent = `E-Program: "${group.title}"`;
+      document.getElementById("eProgModalSub").textContent = `${group.name} • ${cls?.name || "Kelas Teater"}`;
+
+      const cardsHtml = members.map((m) => {
+        const meta = getRoleMetadata(m.roleId, m.role);
+        return `
+          <div class="mini-summary-card" style="display:flex;align-items:center;gap:10px;">
+            ${renderAvatarHtml(m, 48)}
+            <div>
+              <strong>${escapeHtml(m.name)}</strong>
+              <div style="font-size:12px;color:var(--primary);font-weight:600;">${escapeHtml(m.roleId || m.role)}</div>
+              <div class="field-hint">${escapeHtml(meta.categoryLabel)}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("eProgModalBody").innerHTML = `
+        <div class="subform-box" style="flex-direction:row;align-items:center;gap:14px;">
+          ${group.logoUrl ? `<img src="${escapeHtml(group.logoUrl)}" class="group-logo" alt="Logo" />` : ""}
+          <div>
+            <h4 style="margin:0 0 4px;">${escapeHtml(group.title)}</h4>
+            <p style="margin:0;font-size:13px;">${escapeHtml(group.synopsis || "Pementasan karya teater kolaboratif siswa.")}</p>
+            <span class="field-hint">Penulis Naskah: ${escapeHtml(script?.author || "-")} • Pembimbing: ${escapeHtml(currentUser.name)}</span>
+          </div>
+        </div>
+        <strong style="font-size:14px;">Galeri Pemeran & Kerabat Kerja (${members.length} Personel)</strong>
+        <div class="cards-grid-2">${cardsHtml || '<p class="text-muted">Belum ada anggota terdaftar.</p>'}</div>
+      `;
+      document.getElementById("eProgramModal").classList.remove("hidden");
+    }
+
+    function renderStudio() {
+      const myGroups = getMyGroups();
+      const myGroupIds = new Set(myGroups.map((g) => g.id || g.docId));
+      const myClassIds = new Set(myGroups.map((g) => g.classId));
+
+      // Review & Komentar Revisi Naskah Kelompok
+      const scripts = state.scripts.filter((s) => myGroupIds.has(s.groupId));
+      const scriptsContainer = document.getElementById("guruScriptsList");
+      scriptsContainer.innerHTML = scripts.length
+        ? scripts.map((s) => {
+            const grp = state.groups.find((g) => (g.id || g.docId) === s.groupId);
+            const revStatus = s.reviewStatus || "DRAFT";
+            const badgeCls = revStatus === "DISETUJUI" ? "badge-success" : revStatus === "PERLU_REVISI" ? "badge-warning" : "badge-neutral";
+            return `
+              <div class="feature-card">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+                    <h4>${escapeHtml(s.title)}</h4>
+                    <span class="badge ${badgeCls}">${escapeHtml(revStatus)}</span>
+                  </div>
+                  <p style="margin-bottom:8px;">Kelompok: ${escapeHtml(grp ? grp.name : "-")} • Penulis: ${escapeHtml(s.author || "-")}</p>
+                  <pre class="script-reader" style="max-height:180px;margin-bottom:10px;">${escapeHtml(s.content || "")}</pre>
+
+                  <div class="subform-box">
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label style="font-size:12px;">Status Persetujuan Naskah</label>
+                        <select id="scrStatus_${escapeHtml(s.docId)}">
+                          <option value="DRAFT" ${revStatus === "DRAFT" ? "selected" : ""}>Draft / Dalam Peninjauan</option>
+                          <option value="PERLU_REVISI" ${revStatus === "PERLU_REVISI" ? "selected" : ""}>Perlu Revisi Dialog / Babak</option>
+                          <option value="DISETUJUI" ${revStatus === "DISETUJUI" ? "selected" : ""}>Disetujui Siap Pentas</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label style="font-size:12px;">Catatan Dramaturgi Guru</label>
+                        <input type="text" id="scrFeedback_${escapeHtml(s.docId)}" value="${escapeHtml(s.teacherFeedback || "")}" placeholder="Tulis masukan alur, dialog, atau adegan..." />
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-xs" data-save-script-review="${escapeHtml(s.docId)}">
+                      Simpan Komentar Revisi Naskah
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<p class="text-muted">Belum ada naskah yang diunggah oleh kelompok binaan.</p>`;
+
+      scriptsContainer.querySelectorAll("[data-save-script-review]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const docId = btn.dataset.saveScriptReview;
+          const reviewStatus = document.getElementById(`scrStatus_${docId}`).value;
+          const teacherFeedback = document.getElementById(`scrFeedback_${docId}`).value.trim();
+          try {
+            await saveDocument(COLS.SCRIPTS, docId, { reviewStatus, teacherFeedback });
+            showToast("Status & komentar revisi naskah berhasil dikirim ke kelompok.", "success");
+            await loadGuruData();
+          } catch (err) {
+            showToast("Gagal menyimpan ulasan naskah: " + err.message, "danger");
+          }
+        });
+      });
+
+      // Pantauan Bloking Panggung Kelompok
+      const blkOverview = document.getElementById("guruBlockingOverview");
+      blkOverview.innerHTML = myGroups.length
+        ? myGroups.map((g) => {
+            const gId = g.id || g.docId;
+            const pins = state.blocking.filter((b) => b.groupId === gId);
+            const scenesCount = new Set(pins.map((p) => p.scene)).size;
+            return `
+              <div class="mini-summary-card">
+                <div class="mini-summary-head">
+                  <strong>${escapeHtml(g.name)}</strong>
+                  <span class="badge badge-info">${pins.length} Penanda (${scenesCount} Adegan)</span>
+                </div>
+                <div class="mini-summary-sub">
+                  ${pins.length
+                    ? pins.slice(0, 4).map((p) => `${p.scene} [${p.zone}]: ${p.label}`).join(" • ")
+                    : "Kelompok belum memetakan posisi bloking panggung."}
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<p class="text-muted">Belum ada kelompok binaan.</p>`;
+
+      // Referensi Audio / YouTube
+      const refs = state.references.filter((r) => !r.classId || myClassIds.has(r.classId));
+      document.getElementById("guruRefList").innerHTML = refs.length
+        ? refs.map((r) => `
+            <div class="mini-summary-card" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <div>
+                <strong>${escapeHtml(r.title)}</strong>
+                <div class="mini-summary-sub">${escapeHtml(r.category)}</div>
+              </div>
+              <div class="action-group">
+                <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-xs">Buka</a>
+                <button type="button" class="btn btn-danger-outline btn-xs" data-del-ref="${escapeHtml(r.docId)}">Hapus</button>
+              </div>
+            </div>
+          `).join("")
+        : `<p class="text-muted">Belum ada referensi audio/YouTube.</p>`;
+
+      document.querySelectorAll("[data-del-ref]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ok = await confirmDialog("Hapus Referensi", "Hapus referensi audio/video ini?");
+          if (!ok) return;
+          try {
+            await removeDocument(COLS.REFERENCES, btn.dataset.delRef);
+            showToast("Referensi dihapus.", "success");
+            await loadGuruData();
+          } catch (err) {
+            showToast("Gagal menghapus: " + err.message, "danger");
+          }
+        });
+      });
+    }
+
+    async function handleAddReference(e) {
+      e.preventDefault();
+      const title = document.getElementById("refTitleInput").value.trim();
+      const classId = document.getElementById("refClassInput").value;
+      const category = document.getElementById("refCategoryInput").value;
+      const url = document.getElementById("refUrlInput").value.trim();
+
+      if (!title || !classId || !url) {
+        showToast("Lengkapi judul, kelas tujuan, dan tautan referensi.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnAddRef");
+      btn.disabled = true;
+      try {
+        const docId = `ref_${Date.now()}`;
+        await saveDocument(COLS.REFERENCES, docId, {
+          id: docId,
+          title,
+          classId,
+          category,
+          url,
+          createdBy: currentUser.name
+        });
+        document.getElementById("guruRefForm").reset();
+        showToast("Referensi berhasil ditambahkan.", "success");
+        await loadGuruData();
+      } catch (err) {
+        showToast("Gagal menambah referensi: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderProfileAndDrive() {
+      document.getElementById("guruProfileName").value = currentUser.name || "";
+      document.getElementById("guruProfileWa").value = currentUser.whatsapp || "";
+      document.getElementById("guruProfileNip").value = currentUser.nis || "";
+      document.getElementById("removeGuruAvatarFlag").value = "false";
+      document.getElementById("guruAvatarPreviewWrap").innerHTML = renderAvatarHtml(currentUser, 48);
+      document.getElementById("btnRemoveGuruAvatar").classList.toggle("hidden", !currentUser.avatarUrl);
+
+      const myClassIds = new Set(getMyGroups().map((g) => g.classId));
+      const relevantBc = state.broadcasts
+        .filter((b) => b.senderName === currentUser.name || !b.targetClassIds?.length || b.targetClassIds.some((cid) => myClassIds.has(cid)))
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+
+      const bcListEl = document.getElementById("guruBroadcastsList");
+      bcListEl.innerHTML = relevantBc.length
+        ? relevantBc.map((b) => `
+            <div class="mini-summary-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <div>
+                <strong>${escapeHtml(b.title)}</strong>
+                <div class="mini-summary-sub">${escapeHtml(b.message)}</div>
+                <span class="field-hint">Oleh: ${escapeHtml(b.senderName || "Guru")}</span>
+              </div>
+              <button type="button" class="btn btn-danger-outline btn-xs" data-del-guru-bc="${escapeHtml(b.docId)}">Hapus</button>
+            </div>
+          `).join("")
+        : `<p class="text-muted" style="font-size:12px;">Belum ada pengumuman aktif.</p>`;
+
+      bcListEl.querySelectorAll("[data-del-guru-bc]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ok = await confirmDialog("Hapus Pengumuman", "Yakin ingin menghapus pengumuman ini?");
+          if (!ok) return;
+          try {
+            await removeDocument(COLS.BROADCASTS, btn.dataset.delGuruBc);
+            showToast("Pengumuman berhasil dihapus.", "success");
+            await loadGuruData();
+          } catch (err) {
+            showToast("Gagal menghapus: " + err.message, "danger");
+          }
+        });
+      });
+
+      document.getElementById("guruDriveLinks").innerHTML = state.driveFolders.map((f) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span>${escapeHtml(f.name)}</span>
+          ${f.url
+            ? `<a href="${escapeHtml(f.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-xs">Buka Folder</a>`
+            : `<span class="field-hint">Belum ditautkan</span>`}
+        </div>
+      `).join("");
+    }
+
+    async function handleSaveProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById("guruProfileName").value.trim();
+      const wa = document.getElementById("guruProfileWa").value.trim();
+      const nip = document.getElementById("guruProfileNip").value.trim();
+      const avatarFile = document.getElementById("guruProfileAvatarFile").files[0];
+      const removeAvatar = document.getElementById("removeGuruAvatarFlag").value === "true";
+
+      if (!/^(08|628|\+628)[0-9]{7,13}$/.test(wa)) {
+        showToast("Format nomor WhatsApp tidak valid. Gunakan awalan 08 atau 628.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSaveGuruProfile");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan profil & foto guru...");
+      try {
+        const updates = { name, whatsapp: wa, nis: nip };
+        if (avatarFile) {
+          updates.avatarUrl = await compressImageFile(avatarFile, 280, 0.72);
+        } else if (removeAvatar) {
+          updates.avatarUrl = "";
+        }
+
+        await saveDocument(COLS.USERS, currentUser.docId, updates);
+        Object.assign(currentUser, updates);
+        document.getElementById("teacherNameDisplay").textContent = name;
+        document.getElementById("teacherAvatarTopbar").innerHTML = renderAvatarHtml(currentUser, 28);
+        validateTeacherWhatsapp();
+        renderProfileAndDrive();
+        showToast("Profil dan foto guru berhasil disimpan.", "success");
+      } catch (err) {
+        showToast("Gagal menyimpan profil: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleChangeGuruPassword(e) {
+      e.preventDefault();
+      const p1 = document.getElementById("guruNewPassword").value;
+      const p2 = document.getElementById("guruConfirmPassword").value;
+      if (p1 !== p2) {
+        showToast("Konfirmasi kata sandi tidak cocok.", "warning");
+        return;
+      }
+      const btn = document.getElementById("btnChangeGuruPwd");
+      btn.disabled = true;
+      showLoader(true, "Memperbarui kata sandi...");
+      try {
+        await changeOwnPassword(p1);
+        document.getElementById("guruPasswordForm").reset();
+        showToast("Kata sandi akun berhasil diperbarui.", "success");
+      } catch (err) {
+        showToast(err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSendBroadcast(e) {
+      e.preventDefault();
+      const title = document.getElementById("guruBcTitle").value.trim();
+      const clsId = document.getElementById("guruBcClass").value;
+      const message = document.getElementById("guruBcMsg").value.trim();
+
+      if (!title || !message) {
+        showToast("Judul dan isi pesan wajib diisi.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSendGuruBc");
+      btn.disabled = true;
+      try {
+        const docId = `bc_${Date.now()}`;
+        await saveDocument(COLS.BROADCASTS, docId, {
+          id: docId,
+          title,
+          message,
+          targetClassIds: clsId ? [clsId] : [],
+          senderName: currentUser.name,
+          createdAt: new Date().toISOString()
+        });
+        document.getElementById("guruBroadcastForm").reset();
+        showToast("Pengumuman berhasil dikirim.", "success");
+        await loadGuruData();
+      } catch (err) {
+        showToast("Gagal mengirim pengumuman: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
+```
