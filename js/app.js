@@ -1,4 +1,3 @@
-```javascript
 import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -200,7 +199,6 @@ export function getRoleMetadata(roleName, fallbackUserRole = "STUDENT") {
   };
 }
 
-// Matriks hak akses penyuntingan dokumen & modul berdasarkan jabatan divisi (roleId)
 export const DIVISION_TEMPLATE_OWNERS = {
   tpl_proposal: ["Pimpinan Produksi", "Sutradara", "Sekretaris & Dokumentasi"],
   tpl_kerabat_kerja: ["Pimpinan Produksi", "Sekretaris & Dokumentasi"],
@@ -292,7 +290,6 @@ export const DRIVE_FOLDERS_DEFAULT = [
   "12. Laporan Pertanggungjawaban (LPJ)"
 ];
 
-// 10 Template Dokumen Produksi Teater Terperinci
 export const DOC_TEMPLATES = [
   {
     id: "tpl_proposal",
@@ -779,7 +776,6 @@ export function compressImageFile(file, maxWidth = 420, quality = 0.72) {
   });
 }
 
-// Helper untuk menampilkan foto profil pengguna atau inisial nama secara konsisten
 export function renderAvatarHtml(user, sizePx = 36, showPhoto = true) {
   const name = String(user?.name || "U").trim();
   const initials = name
@@ -1919,9 +1915,6 @@ export async function exportProductionDocx({
   URL.revokeObjectURL(url);
 }
 
-// ============================================================================
-// 9. GENERATOR RAPOR INDIVIDU (.DOCX) & E-PROGRAM BUKU ACARA (.DOCX)
-// ============================================================================
 export async function exportIndividualReportDocx({
   student,
   className = "-",
@@ -2019,9 +2012,6 @@ export async function exportEProgramDocx({
   });
 }
 
-// ============================================================================
-// 10. BACKUP PENUH SELURUH KOLEKSI DATABASE FIREBASE (.JSON)
-// ============================================================================
 export async function exportFullDatabaseBackupJSON() {
   const backupData = {
     meta: {
@@ -2062,4 +2052,3 @@ export async function exportFullDatabaseBackupJSON() {
   a.remove();
   URL.revokeObjectURL(url);
 }
-```
