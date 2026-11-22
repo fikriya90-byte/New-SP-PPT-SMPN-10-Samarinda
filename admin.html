@@ -1,0 +1,1882 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Admin — Sistem Penilaian Proyek Produksi Teater</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <span class="brand-pill">ADMIN SP-PPT</span>
+        <div>
+          <h1 class="topbar-title">Panel Super Admin Produksi Teater</h1>
+          <p class="topbar-subtitle">Manajemen Akun, Proyek Kelompok, Tahapan & Rekap Nilai 360°</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-chip">
+          <span class="user-name" id="adminNameDisplay">Memuat...</span>
+          <span class="badge badge-admin">ADMIN</span>
+        </div>
+        <button type="button" id="btnPrintRecap" class="btn btn-outline btn-sm">Cetak / PDF</button>
+        <button type="button" id="btnLogout" class="btn btn-danger-outline btn-sm">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Banner Migrasi Otomatis 1-Klik dari Database Lama -->
+    <section id="legacyMigrationBanner" class="migration-banner hidden no-print">
+      <div>
+        <h3>Data Database Lama Terdeteksi (<code>sp_ppt_state/production_v1</code>)</h3>
+        <p id="legacySummaryText">Memeriksa rincian akun, kelas, kelompok, tugas, dan nilai lama...</p>
+      </div>
+      <div class="action-group">
+        <button type="button" id="btnRunMigration" class="btn btn-warning">
+          Migrasi Otomatis Sekarang (1-Klik)
+        </button>
+      </div>
+    </section>
+
+    <!-- Ringkasan KPI -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Siswa Terdaftar</span>
+        <strong class="kpi-value" id="kpiTotalStudents">0</strong>
+        <span class="kpi-note" id="kpiTotalTeachers">0 Guru Pengampu</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Proyek & Kelompok</span>
+        <strong class="kpi-value" id="kpiTotalGroups">0</strong>
+        <span class="kpi-note" id="kpiTotalClasses">0 Kelas Aktif</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Progres Penilaian Guru</span>
+        <strong class="kpi-value" id="kpiGradedProgress">0%</strong>
+        <div class="progress-track"><div class="progress-fill" id="kpiProgressBar" style="width: 0%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Rata-rata Nilai Akhir 360°</span>
+        <strong class="kpi-value" id="kpiAvgFinal">0.00</strong>
+        <span class="kpi-note" id="kpiWeightInfo">Bobot: Self 15% • Peer 25% • Guru 60%</span>
+      </div>
+    </section>
+
+    <!-- Navigasi Tab Utama -->
+    <nav class="tab-nav no-print" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="tabRecap">Rekap Nilai & Progres</button>
+      <button type="button" class="tab-btn" data-tab="tabUsers">Kelola Akun Pengguna</button>
+      <button type="button" class="tab-btn" data-tab="tabProjects">Proyek, Kelompok & Kelas</button>
+      <button type="button" class="tab-btn" data-tab="tabStages">Tahapan Produksi & Deadline</button>
+      <button type="button" class="tab-btn" data-tab="tabSettings">Rubrik 360°, Drive & Siaran</button>
+    </nav>
+
+    <!-- ====================================================================
+         TAB 1: REKAP NILAI & PROGRES
+         ==================================================================== -->
+    <section id="tabRecap" class="tab-pane">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Rekap Nilai Akhir Proyek Teater (360°)</h2>
+            <p class="panel-desc">Menampilkan nilai per aspek dari Guru, nilai Self & Peer, serta nilai akhir otomatis.</p>
+          </div>
+          <div class="action-group no-print">
+            <button type="button" id="btnExportCsv" class="btn btn-success btn-sm">Ekspor Rekap CSV</button>
+            <button type="button" id="btnRefreshAll" class="btn btn-outline btn-sm">Muat Ulang Data</button>
+          </div>
+        </div>
+
+        <div id="groupSummaryStrip" class="summary-strip"></div>
+
+        <div class="filter-bar no-print">
+          <div class="filter-item">
+            <label for="filterRecapClass">Kelas</label>
+            <select id="filterRecapClass"><option value="">Semua Kelas</option></select>
+          </div>
+          <div class="filter-item">
+            <label for="filterRecapGroup">Kelompok / Proyek</label>
+            <select id="filterRecapGroup"><option value="">Semua Kelompok</option></select>
+          </div>
+          <div class="filter-item">
+            <label for="filterRecapStatus">Status Penilaian</label>
+            <select id="filterRecapStatus">
+              <option value="">Semua Status</option>
+              <option value="GRADED">Sudah Dinilai Guru</option>
+              <option value="UNGRADED">Belum Dinilai Guru</option>
+            </select>
+          </div>
+          <div class="filter-item filter-search">
+            <label for="filterRecapSearch">Cari Nama / NIS / Peran</label>
+            <input type="search" id="filterRecapSearch" placeholder="Ketik kata kunci..." />
+          </div>
+        </div>
+
+        <p class="table-meta" id="recapTableMeta">Menampilkan 0 data siswa</p>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Siswa</th>
+                <th>Kelas / Kelompok</th>
+                <th>Peran / Divisi</th>
+                <th class="num">Disiplin</th>
+                <th class="num">Kolaborasi</th>
+                <th class="num">Kualitas</th>
+                <th class="num">Tanggung Jawab</th>
+                <th class="num">Self</th>
+                <th class="num">Peer</th>
+                <th class="num">Guru</th>
+                <th class="num">Nilai Akhir</th>
+                <th>Status</th>
+                <th>Catatan Guru</th>
+              </tr>
+            </thead>
+            <tbody id="recapTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 2: KELOLA AKUN PENGGUNA
+         ==================================================================== -->
+    <section id="tabUsers" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Manajemen Akun Pengguna (Guru, Leader, Siswa, Admin)</h2>
+            <p class="panel-desc">Tambah akun baru tanpa memutus sesi Admin, unggah foto profil, import massal siswa, atau nonaktifkan akses.</p>
+          </div>
+          <div class="action-group">
+            <button type="button" id="btnOpenBulkImport" class="btn btn-success btn-sm">+ Import Massal Siswa (CSV/Excel)</button>
+            <button type="button" id="btnOpenAddUser" class="btn btn-primary btn-sm">+ Tambah Akun Baru</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label for="filterUserRole">Filter Role</label>
+            <select id="filterUserRole">
+              <option value="">Semua Role</option>
+              <option value="ADMIN">Admin</option>
+              <option value="TEACHER">Guru Pengampu</option>
+              <option value="LEADER">Pimpinan Produksi (Leader)</option>
+              <option value="STUDENT">Anggota Produksi (Siswa)</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="filterUserClass">Filter Kelas</label>
+            <select id="filterUserClass"><option value="">Semua Kelas</option></select>
+          </div>
+          <div class="filter-item filter-search">
+            <label for="filterUserSearch">Cari Nama / Username / NIS</label>
+            <input type="search" id="filterUserSearch" placeholder="Cari pengguna..." />
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Foto & Nama Lengkap</th>
+                <th>Username / Email</th>
+                <th>Role</th>
+                <th>Kelas & Kelompok</th>
+                <th>Jabatan / NIS</th>
+                <th>WhatsApp</th>
+                <th>Status</th>
+                <th class="actions-col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 3: PROYEK, KELOMPOK & KELAS
+         ==================================================================== -->
+    <section id="tabProjects" class="tab-pane hidden">
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Daftar Kelas</h2>
+              <p class="panel-desc">Kelola kelas mata pelajaran Seni Teater & wali pengampu.</p>
+            </div>
+            <button type="button" id="btnOpenAddClass" class="btn btn-primary btn-sm">+ Tambah Kelas</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nama Kelas</th>
+                  <th>Tahun Ajaran</th>
+                  <th>Guru Pengampu</th>
+                  <th class="actions-col">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="classesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Proyek & Kelompok Produksi</h2>
+              <p class="panel-desc">Atur judul lakon, guru penilai, pimpinan produksi, dan anggota kelompok.</p>
+            </div>
+            <button type="button" id="btnOpenAddGroup" class="btn btn-primary btn-sm">+ Tambah Proyek</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kelompok & Judul Lakon</th>
+                  <th>Kelas</th>
+                  <th>Guru Pengampu</th>
+                  <th>Anggota</th>
+                  <th class="actions-col">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="groupsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 4: TAHAPAN PRODUKSI & MONITORING DEADLINE
+         ==================================================================== -->
+    <section id="tabStages" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Manajemen 4 Tahapan Produksi & Carry Over</h2>
+            <p class="panel-desc">Tetapkan jadwal batas akhir tiap tahap dan pindahkan tugas tertunda ke tahap aktif.</p>
+          </div>
+          <button type="button" id="btnCarryOverTasks" class="btn btn-warning btn-sm">
+            Carry Over Tugas Tertunda ke Tahap Aktif
+          </button>
+        </div>
+
+        <div id="stagesCardsGrid" class="cards-grid-2"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Monitoring Tugas & Status Deadline Seluruh Kelompok</h2>
+            <p class="panel-desc" id="adminDeadlineSummary">Memantau keterlambatan dan tenggat tugas lintas kelompok.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Judul Tugas</th>
+                <th>Tahap</th>
+                <th>Kelompok</th>
+                <th>Divisi / Penanggung Jawab</th>
+                <th>Tenggat Waktu (Deadline)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminTasksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 5: RUBRIK 360°, DRIVE & SIARAN PENGUMUMAN
+         ==================================================================== -->
+    <section id="tabSettings" class="tab-pane hidden">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2>Konfigurasi Rubrik Penilaian 360°</h2>
+            <p class="panel-desc">Total persentase bobot penilai wajib berjumlah tepat 100%.</p>
+          </div>
+        </div>
+
+        <div class="rubric-layout">
+          <div class="rubric-info-box">
+            <h3>4 Aspek Penilaian (Skala 0 – 100)</h3>
+            <ul class="rubric-list" id="rubricAspectsList"></ul>
+          </div>
+
+          <form id="rubricWeightsForm" class="rubric-weight-box">
+            <h3>Bobot Sumber Penilaian</h3>
+            <div class="form-stack">
+              <div class="form-group">
+                <label for="weightSelf">Penilaian Diri Sendiri (Self) %</label>
+                <input type="number" id="weightSelf" min="0" max="100" required />
+              </div>
+              <div class="form-group">
+                <label for="weightPeer">Penilaian Teman Sejawat (Peer) %</label>
+                <input type="number" id="weightPeer" min="0" max="100" required />
+              </div>
+              <div class="form-group">
+                <label for="weightTeacher">Penilaian Guru Pengampu (Teacher) %</label>
+                <input type="number" id="weightTeacher" min="0" max="100" required />
+              </div>
+            </div>
+            <div class="weight-total-bar">
+              <span>Total Bobot:</span>
+              <span id="weightTotalDisplay">100%</span>
+            </div>
+            <button type="submit" id="btnSaveWeights" class="btn btn-primary btn-block">Simpan Bobot Penilaian</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="cards-grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2>Tautan 12 Folder Arsip Google Drive</h2>
+              <p class="panel-desc">Tautan arsip produksi yang dapat diakses oleh Guru dan Siswa.</p>
+            </div>
+          </div>
+          <form id="driveFoldersForm" class="form-stack">
+            <div id="driveFoldersList" class="form-stack"></div>
+            <button type="submit" id="btnSaveDriveFolders" class="btn btn-primary">Simpan 12 Tautan Drive</button>
+          </form>
+        </div>
+
+        <div class="form-stack">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Siaran Pengumuman Lintas Kelas</h2>
+                <p class="panel-desc">Kirim instruksi resmi ke seluruh atau beberapa kelas sekaligus.</p>
+              </div>
+            </div>
+            <form id="broadcastForm" class="form-stack">
+              <div class="form-group">
+                <label for="bcTitle">Judul Pengumuman <span class="required">*</span></label>
+                <input type="text" id="bcTitle" placeholder="Contoh: Jadwal Gladi Bersih Bersama" required />
+              </div>
+              <div class="form-group">
+                <label for="bcTargetClass">Target Kelas</label>
+                <select id="bcTargetClass"><option value="ALL">Semua Kelas</option></select>
+              </div>
+              <div class="form-group">
+                <label for="bcMessage">Isi Pengumuman <span class="required">*</span></label>
+                <textarea id="bcMessage" rows="3" placeholder="Tulis pesan pengumuman..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="bcLink">Tautan Pendukung (Opsional)</label>
+                <input type="url" id="bcLink" placeholder="https://..." />
+              </div>
+              <button type="submit" id="btnSendBroadcast" class="btn btn-primary">Kirim Pengumuman</button>
+            </form>
+
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+              <strong style="display:block;margin-bottom:8px;font-size:13px;">Riwayat Pengumuman Terkirim</strong>
+              <div id="adminBroadcastsList" class="form-stack"></div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <h2>Zona Pemeliharaan & Cadangan Database Firebase</h2>
+                <p class="panel-desc">Unduh cadangan penuh seluruh koleksi Firebase (.json) atau sinkronkan ulang data lama.</p>
+              </div>
+            </div>
+            <div class="form-stack">
+              <button type="button" id="btnBackupDatabaseJson" class="btn btn-success btn-block">
+                Unduh Full Backup Database Firebase (.JSON)
+              </button>
+              <button type="button" id="btnResyncLegacyData" class="btn btn-outline btn-block">
+                Sinkronisasi Ulang Data Lama (sp_ppt_state)
+              </button>
+              <button type="button" id="btnSeedDemoData" class="btn btn-danger-outline btn-block">
+                Isi Data Contoh (Demo) Aman
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL TAMBAH / EDIT AKUN PENGGUNA -->
+  <div id="userModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="userModalTitle">Tambah Akun Pengguna</h3>
+          <p class="modal-subtitle">Lengkapi identitas, foto profil, dan hak akses pengguna</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="userModal">&times;</button>
+      </div>
+      <form id="userForm" class="form-stack modal-body-scroll">
+        <input type="hidden" id="editUserDocId" />
+        <input type="hidden" id="removeUserAvatarFlag" value="false" />
+
+        <div class="subform-box" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="userAvatarPreviewWrap"></div>
+            <div>
+              <strong style="font-size:13px;">Foto Profil Pengguna</strong>
+              <div class="field-hint">Otomatis dikompresi agar ringan di database</div>
+            </div>
+          </div>
+          <div class="action-group">
+            <label class="btn btn-outline btn-xs" style="cursor:pointer;margin:0;">
+              Pilih Foto
+              <input type="file" id="userAvatarFileInput" accept="image/*" class="hidden" />
+            </label>
+            <button type="button" id="btnRemoveUserAvatar" class="btn btn-danger-outline btn-xs hidden">Hapus Foto</button>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="userNameInput">Nama Lengkap <span class="required">*</span></label>
+            <input type="text" id="userNameInput" required />
+          </div>
+          <div class="form-group">
+            <label for="userRoleInput">Role Pengguna <span class="required">*</span></label>
+            <select id="userRoleInput" required>
+              <option value="TEACHER">Guru Pengampu (TEACHER)</option>
+              <option value="LEADER">Pimpinan Produksi (LEADER)</option>
+              <option value="STUDENT">Anggota Produksi (STUDENT)</option>
+              <option value="ADMIN">Super Admin (ADMIN)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="userUsernameInput">Username Login <span class="required">*</span></label>
+            <input type="text" id="userUsernameInput" placeholder="tanpa spasi, misal: guru_budi" required />
+          </div>
+          <div class="form-group">
+            <label for="userPasswordInput">Kata Sandi <span class="required" id="pwdReqMark">*</span></label>
+            <input type="password" id="userPasswordInput" placeholder="Minimal 6 karakter" />
+            <span class="field-hint" id="pwdHintText">Wajib diisi saat membuat akun baru.</span>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="userClassInput">Kelas</label>
+            <select id="userClassInput"><option value="">-- Pilih Kelas --</option></select>
+          </div>
+          <div class="form-group">
+            <label for="userGroupInput">Kelompok / Proyek</label>
+            <select id="userGroupInput"><option value="">-- Pilih Kelompok --</option></select>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="userTheatreRoleInput">Jabatan / Divisi Teater</label>
+            <select id="userTheatreRoleInput"><option value="">-- Pilih Peran --</option></select>
+          </div>
+          <div class="form-group">
+            <label for="userNisInput">NIS / NIP</label>
+            <input type="text" id="userNisInput" />
+          </div>
+          <div class="form-group">
+            <label for="userWaInput">No. WhatsApp</label>
+            <input type="text" id="userWaInput" placeholder="0812..." />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="userStatusInput">Status Akun</label>
+          <select id="userStatusInput">
+            <option value="ACTIVE">Aktif</option>
+            <option value="SUSPENDED">Dinonaktifkan (Suspended)</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="userModal">Batal</button>
+          <button type="submit" id="btnSaveUser" class="btn btn-primary">Simpan Akun</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT KELAS -->
+  <div id="classModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 id="classModalTitle">Tambah Kelas</h3>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="classModal">&times;</button>
+      </div>
+      <form id="classForm" class="form-stack">
+        <input type="hidden" id="editClassId" />
+        <div class="form-group">
+          <label for="classNameInput">Nama Kelas <span class="required">*</span></label>
+          <input type="text" id="classNameInput" placeholder="Contoh: XI Seni Teater 1" required />
+        </div>
+        <div class="form-group">
+          <label for="classYearInput">Tahun Ajaran</label>
+          <input type="text" id="classYearInput" value="2025/2026" />
+        </div>
+        <div class="form-group">
+          <label for="classTeacherInput">Guru Pengampu Utama</label>
+          <select id="classTeacherInput"><option value="">-- Pilih Guru --</option></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="classModal">Batal</button>
+          <button type="submit" id="btnSaveClass" class="btn btn-primary">Simpan Kelas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT PROYEK & KELOMPOK -->
+  <div id="groupModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="groupModalTitle">Tambah Proyek & Kelompok</h3>
+          <p class="modal-subtitle">Tentukan judul pementasan, guru penilai, dan pimpinan produksi</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="groupModal">&times;</button>
+      </div>
+      <form id="groupForm" class="form-stack modal-body-scroll">
+        <input type="hidden" id="editGroupId" />
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="groupNameInput">Nama Kelompok / Sanggar <span class="required">*</span></label>
+            <input type="text" id="groupNameInput" placeholder="Contoh: Kelompok 1 - Sanggar Matahari" required />
+          </div>
+          <div class="form-group">
+            <label for="groupClassInput">Kelas <span class="required">*</span></label>
+            <select id="groupClassInput" required><option value="">-- Pilih Kelas --</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="groupTitleInput">Judul Proyek / Lakon Teater <span class="required">*</span></label>
+          <input type="text" id="groupTitleInput" placeholder="Contoh: Pementasan Lakon 'Ayahku Pulang'" required />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="groupTeacherInput">Guru Pengampu / Penilai <span class="required">*</span></label>
+            <select id="groupTeacherInput" required><option value="">-- Pilih Guru --</option></select>
+          </div>
+          <div class="form-group">
+            <label for="groupLeaderInput">Pimpinan Produksi (Leader)</label>
+            <select id="groupLeaderInput"><option value="">-- Pilih Siswa Leader --</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="groupSynopsisInput">Sinopsis Singkat Produksi</label>
+          <textarea id="groupSynopsisInput" rows="3" placeholder="Ringkasan konsep pementasan..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="groupModal">Batal</button>
+          <button type="submit" id="btnSaveGroup" class="btn btn-primary">Simpan Proyek</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL IMPORT MASSAL AKUN SISWA (CSV / TEMPEL DARI EXCEL) -->
+  <div id="bulkImportModal" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>Import Massal Akun Siswa (CSV / Tempel dari Excel)</h3>
+          <p class="modal-subtitle">Buat puluhan akun siswa sekaligus tanpa memutus sesi login Admin</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close="bulkImportModal">&times;</button>
+      </div>
+      <form id="bulkImportForm" class="form-stack modal-body-scroll">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="bulkDefaultClass">Kelas Bawaan (Default) <span class="required">*</span></label>
+            <select id="bulkDefaultClass" required><option value="">-- Pilih Kelas --</option></select>
+          </div>
+          <div class="form-group">
+            <label for="bulkDefaultGroup">Kelompok Bawaan (Opsional)</label>
+            <select id="bulkDefaultGroup"><option value="">-- Tanpa Kelompok / Atur Nanti --</option></select>
+          </div>
+        </div>
+
+        <div class="action-group" style="justify-content:space-between;">
+          <div class="action-group">
+            <button type="button" id="btnDownloadBulkCsvTpl" class="btn btn-outline btn-xs">Unduh Contoh Template CSV</button>
+            <label class="btn btn-outline btn-xs" style="cursor:pointer;margin:0;">
+              Unggah File .CSV
+              <input type="file" id="bulkCsvFileInput" accept=".csv,.txt" class="hidden" />
+            </label>
+          </div>
+          <span class="field-hint">Urutan kolom: <code>Nama, Username, Password, NIS, Jabatan/Divisi, WhatsApp</code></span>
+        </div>
+
+        <div class="form-group">
+          <label for="bulkCsvTextarea">Data Siswa (Bisa copy-paste langsung dari tabel Excel / Google Sheets) <span class="required">*</span></label>
+          <textarea id="bulkCsvTextarea" rows="8" style="font-family:monospace;" placeholder="Andi Pratama, andi23, 123456, 230101, Sutradara, 081234567890&#10;Siti Rahmawati, siti23, 123456, 230102, Aktor / Pemeran, 081298765432" required></textarea>
+        </div>
+
+        <div id="bulkImportStatusBox" class="alert alert-info hidden"></div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="bulkImportModal">Batal</button>
+          <button type="submit" id="btnRunBulkImport" class="btn btn-success">Proses Import Akun Siswa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      COLS,
+      RUBRIC_ASPECTS,
+      PRODUCTION_STAGES,
+      THEATRE_ROLES,
+      requireAuthRole,
+      logoutUser,
+      inspectLegacyDatabase,
+      runOneClickLegacyMigration,
+      fetchAllCollection,
+      saveDocument,
+      removeDocument,
+      getRubricWeights,
+      getDriveFolders,
+      computeStudent360Summary,
+      exportGradeRecapCSV,
+      exportFullDatabaseBackupJSON,
+      createAuthAccountByAdmin,
+      compressImageFile,
+      renderAvatarHtml,
+      getRoleLabel,
+      getRoleBadgeClass,
+      getDeadlineStatus,
+      formatIndoDate,
+      confirmDialog,
+      showLoader,
+      showToast,
+      escapeHtml
+    } from "./js/app.js";
+
+    let currentUser = null;
+    let state = {
+      users: [],
+      classes: [],
+      groups: [],
+      tasks: [],
+      assessments: [],
+      stages: [],
+      broadcasts: [],
+      weights: { self: 15, peer: 25, teacher: 60 },
+      driveFolders: []
+    };
+
+    requireAuthRole(["ADMIN"], async (profile) => {
+      currentUser = profile;
+      document.getElementById("adminNameDisplay").textContent = profile.name;
+      bindGlobalEvents();
+      await checkLegacyBanner();
+      await loadAllAdminData();
+    });
+
+    async function checkLegacyBanner() {
+      try {
+        const info = await inspectLegacyDatabase();
+        const banner = document.getElementById("legacyMigrationBanner");
+        const textEl = document.getElementById("legacySummaryText");
+        if (info.hasLegacy && !info.alreadyMigrated) {
+          const c = info.counts;
+          textEl.textContent = `Ditemukan ${c.users} akun, ${c.classes} kelas, ${c.groups} kelompok, ${c.tasks} tugas, dan ${c.assessments} data nilai lama. Klik tombol di samping untuk memindahkan ke struktur baru tanpa menghapus data lama.`;
+          banner.classList.remove("hidden");
+        } else {
+          banner.classList.add("hidden");
+        }
+      } catch (err) {
+        console.warn("Cek migrasi:", err);
+      }
+    }
+
+    async function loadAllAdminData() {
+      showLoader(true, "Memuat seluruh data sistem...");
+      try {
+        const [users, classes, groups, tasks, assessments, stages, broadcasts, weights, driveFolders] = await Promise.all([
+          fetchAllCollection(COLS.USERS),
+          fetchAllCollection(COLS.CLASSES),
+          fetchAllCollection(COLS.GROUPS),
+          fetchAllCollection(COLS.TASKS),
+          fetchAllCollection(COLS.ASSESSMENTS),
+          fetchAllCollection(COLS.STAGES),
+          fetchAllCollection(COLS.BROADCASTS),
+          getRubricWeights(),
+          getDriveFolders()
+        ]);
+
+        state = { users, classes, groups, tasks, assessments, stages, broadcasts, weights, driveFolders };
+        populateFilterDropdowns();
+        renderKpis();
+        renderRecapTable();
+        renderUsersTable();
+        renderClassesAndGroups();
+        renderStagesAndTasks();
+        renderSettingsTab();
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal memuat data admin: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function bindGlobalEvents() {
+      document.getElementById("btnLogout").addEventListener("click", logoutUser);
+      document.getElementById("btnPrintRecap").addEventListener("click", () => window.print());
+      document.getElementById("btnRefreshAll").addEventListener("click", loadAllAdminData);
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-pane").forEach((p) => p.classList.add("hidden"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.tab).classList.remove("hidden");
+        });
+      });
+
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.getElementById(btn.dataset.close).classList.add("hidden");
+        });
+      });
+
+      document.getElementById("btnRunMigration").addEventListener("click", async () => {
+        const ok = await confirmDialog(
+          "Migrasi Data Lama (1-Klik)",
+          "Seluruh akun, kelas, kelompok, tugas, dan nilai dari sp_ppt_state/production_v1 akan disalin ke koleksi terstruktur. Dokumen lama tetap disimpan sebagai cadangan. Lanjutkan?",
+          "Mulai Migrasi",
+          false
+        );
+        if (!ok) return;
+
+        showLoader(true, "Menjalankan migrasi database lama...");
+        try {
+          const count = await runOneClickLegacyMigration(currentUser);
+          showToast(`Migrasi berhasil! ${count} entitas data lama telah dimuat.`, "success", 5000);
+          document.getElementById("legacyMigrationBanner").classList.add("hidden");
+          await loadAllAdminData();
+        } catch (err) {
+          showToast("Migrasi gagal: " + err.message, "danger", 5000);
+        } finally {
+          showLoader(false);
+        }
+      });
+
+      ["filterRecapClass", "filterRecapGroup", "filterRecapStatus"].forEach((id) => {
+        document.getElementById(id).addEventListener("change", renderRecapTable);
+      });
+      document.getElementById("filterRecapSearch").addEventListener("input", renderRecapTable);
+
+      ["filterUserRole", "filterUserClass"].forEach((id) => {
+        document.getElementById(id).addEventListener("change", renderUsersTable);
+      });
+      document.getElementById("filterUserSearch").addEventListener("input", renderUsersTable);
+
+      document.getElementById("btnExportCsv").addEventListener("click", () => {
+        const rows = buildRecapRows();
+        if (!rows.length) {
+          showToast("Tidak ada data siswa untuk diekspor.", "warning");
+          return;
+        }
+        exportGradeRecapCSV(rows, `rekap_nilai_teater_${new Date().toISOString().slice(0, 10)}.csv`);
+        showToast("File CSV rekap nilai berhasil diunduh.", "success");
+      });
+
+      document.getElementById("btnOpenAddUser").addEventListener("click", () => openUserModal(null));
+      document.getElementById("btnOpenBulkImport").addEventListener("click", () => {
+        document.getElementById("bulkImportForm").reset();
+        document.getElementById("bulkImportStatusBox").classList.add("hidden");
+        document.getElementById("bulkImportModal").classList.remove("hidden");
+      });
+      document.getElementById("btnOpenAddClass").addEventListener("click", () => openClassModal(null));
+      document.getElementById("btnOpenAddGroup").addEventListener("click", () => openGroupModal(null));
+
+      document.getElementById("userAvatarFileInput").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const dataUrl = await compressImageFile(file, 280, 0.72);
+          document.getElementById("removeUserAvatarFlag").value = "false";
+          document.getElementById("userAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: "Preview", avatarUrl: dataUrl }, 48);
+          document.getElementById("btnRemoveUserAvatar").classList.remove("hidden");
+        } catch (err) {
+          showToast(err.message, "warning");
+        }
+      });
+
+      document.getElementById("btnRemoveUserAvatar").addEventListener("click", () => {
+        document.getElementById("userAvatarFileInput").value = "";
+        document.getElementById("removeUserAvatarFlag").value = "true";
+        const currentName = document.getElementById("userNameInput").value || "U";
+        document.getElementById("userAvatarPreviewWrap").innerHTML = renderAvatarHtml({ name: currentName, avatarUrl: "" }, 48);
+        document.getElementById("btnRemoveUserAvatar").classList.add("hidden");
+      });
+
+      document.getElementById("btnDownloadBulkCsvTpl").addEventListener("click", () => {
+        const sampleCsv =
+          "Nama Lengkap,Username,Password,NIS,Jabatan Divisi,WhatsApp\n" +
+          "Andi Pratama,andi23,123456,230101,Sutradara,081234567890\n" +
+          "Siti Rahmawati,siti23,123456,230102,Aktor / Pemeran,081298765432\n";
+        const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "template_import_siswa_sp_ppt.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("bulkCsvFileInput").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById("bulkCsvTextarea").value = ev.target.result || "";
+        };
+        reader.readAsText(file);
+      });
+
+      document.getElementById("bulkImportForm").addEventListener("submit", handleBulkImportStudents);
+      document.getElementById("btnBackupDatabaseJson").addEventListener("click", async () => {
+        showLoader(true, "Menyiapkan file backup seluruh koleksi Firebase...");
+        try {
+          await exportFullDatabaseBackupJSON();
+          showToast("Backup penuh database (.json) berhasil diunduh!", "success");
+        } catch (err) {
+          showToast("Gagal membuat backup: " + err.message, "danger");
+        } finally {
+          showLoader(false);
+        }
+      });
+      document.getElementById("btnResyncLegacyData").addEventListener("click", async () => {
+        const ok = await confirmDialog(
+          "Sinkronisasi Ulang Data Lama",
+          "Sistem akan membaca ulang dokumen sp_ppt_state/production_v1 dan menyelaraskan data ke koleksi terstruktur. Lanjutkan?",
+          "Sinkronkan Sekarang",
+          false
+        );
+        if (!ok) return;
+        showLoader(true, "Menyinkronkan data lama...");
+        try {
+          const total = await runOneClickLegacyMigration(currentUser);
+          showToast(`Sinkronisasi selesai (${total} entitas diproses).`, "success");
+          await loadAllAdminData();
+        } catch (err) {
+          showToast("Gagal sinkronisasi: " + err.message, "danger");
+        } finally {
+          showLoader(false);
+        }
+      });
+
+      document.getElementById("userForm").addEventListener("submit", handleSaveUser);
+      document.getElementById("classForm").addEventListener("submit", handleSaveClass);
+      document.getElementById("groupForm").addEventListener("submit", handleSaveGroup);
+      document.getElementById("rubricWeightsForm").addEventListener("submit", handleSaveWeights);
+      document.getElementById("driveFoldersForm").addEventListener("submit", handleSaveDriveFolders);
+      document.getElementById("broadcastForm").addEventListener("submit", handleSendBroadcast);
+      document.getElementById("btnCarryOverTasks").addEventListener("click", handleCarryOverTasks);
+      document.getElementById("btnSeedDemoData").addEventListener("click", handleSeedDemoData);
+
+      ["weightSelf", "weightPeer", "weightTeacher"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", updateWeightTotalDisplay);
+      });
+    }
+
+    function populateFilterDropdowns() {
+      const classOptions = state.classes
+        .map((c) => `<option value="${escapeHtml(c.id || c.docId)}">${escapeHtml(c.name)}</option>`)
+        .join("");
+
+      const groupOptions = state.groups
+        .map((g) => `<option value="${escapeHtml(g.id || g.docId)}">${escapeHtml(g.name)} — ${escapeHtml(g.title)}</option>`)
+        .join("");
+
+      const teacherOptions = state.users
+        .filter((u) => u.role === "TEACHER")
+        .map((t) => `<option value="${escapeHtml(t.id || t.docId)}">${escapeHtml(t.name)}</option>`)
+        .join("");
+
+      const studentLeaderOptions = state.users
+        .filter((u) => u.role === "LEADER" || u.role === "STUDENT")
+        .map((s) => `<option value="${escapeHtml(s.id || s.docId)}">${escapeHtml(s.name)} (${escapeHtml(s.role)})</option>`)
+        .join("");
+
+      const theatreRoleOptions = THEATRE_ROLES
+        .map((r) => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`)
+        .join("");
+
+      document.getElementById("filterRecapClass").innerHTML = `<option value="">Semua Kelas</option>${classOptions}`;
+      document.getElementById("filterRecapGroup").innerHTML = `<option value="">Semua Kelompok</option>${groupOptions}`;
+      document.getElementById("filterUserClass").innerHTML = `<option value="">Semua Kelas</option>${classOptions}`;
+      document.getElementById("userClassInput").innerHTML = `<option value="">-- Pilih Kelas --</option>${classOptions}`;
+      document.getElementById("userGroupInput").innerHTML = `<option value="">-- Pilih Kelompok --</option>${groupOptions}`;
+      document.getElementById("userTheatreRoleInput").innerHTML = `<option value="">-- Pilih Peran --</option>${theatreRoleOptions}`;
+      document.getElementById("classTeacherInput").innerHTML = `<option value="">-- Pilih Guru --</option>${teacherOptions}`;
+      document.getElementById("groupClassInput").innerHTML = `<option value="">-- Pilih Kelas --</option>${classOptions}`;
+      document.getElementById("groupTeacherInput").innerHTML = `<option value="">-- Pilih Guru --</option>${teacherOptions}`;
+      document.getElementById("groupLeaderInput").innerHTML = `<option value="">-- Pilih Siswa Leader --</option>${studentLeaderOptions}`;
+      document.getElementById("bcTargetClass").innerHTML = `<option value="ALL">Semua Kelas</option>${classOptions}`;
+      document.getElementById("bulkDefaultClass").innerHTML = `<option value="">-- Pilih Kelas --</option>${classOptions}`;
+      document.getElementById("bulkDefaultGroup").innerHTML = `<option value="">-- Tanpa Kelompok / Atur Nanti --</option>${groupOptions}`;
+    }
+
+    function getStudentUsers() {
+      return state.users.filter((u) => u.role === "STUDENT" || u.role === "LEADER");
+    }
+
+    function buildRecapRows() {
+      const students = getStudentUsers();
+      const clsFilter = document.getElementById("filterRecapClass").value;
+      const grpFilter = document.getElementById("filterRecapGroup").value;
+      const statusFilter = document.getElementById("filterRecapStatus").value;
+      const q = document.getElementById("filterRecapSearch").value.trim().toLowerCase();
+
+      return students
+        .map((s) => {
+          const cls = state.classes.find((c) => (c.id || c.docId) === s.classId);
+          const grp = state.groups.find((g) => (g.id || g.docId) === s.groupId);
+          const summary = computeStudent360Summary(s, state.assessments, state.weights);
+          const sc = summary.latestTeacher?.scores || {};
+
+          return {
+            studentId: s.id || s.docId,
+            studentName: s.name,
+            nis: s.nis || "",
+            classId: s.classId || "",
+            className: cls ? cls.name : "-",
+            groupId: s.groupId || "",
+            groupName: grp ? `${grp.name} (${grp.title})` : "-",
+            roleName: s.roleId || (s.role === "LEADER" ? "Pimpinan Produksi" : "Anggota"),
+            disiplin: summary.isGradedByTeacher ? sc.disiplin : null,
+            kolaborasi: summary.isGradedByTeacher ? sc.kolaborasi : null,
+            kualitas: summary.isGradedByTeacher ? sc.kualitas : null,
+            tanggungJawab: summary.isGradedByTeacher ? sc.tanggungJawab : null,
+            selfAvg: summary.selfAvg,
+            peerAvg: summary.peerAvg,
+            teacherAvg: summary.teacherAvg,
+            finalScore: summary.finalScore,
+            predikat: summary.predikat,
+            isGraded: summary.isGradedByTeacher,
+            feedback: summary.latestTeacher?.feedback || ""
+          };
+        })
+        .filter((r) => {
+          if (clsFilter && r.classId !== clsFilter) return false;
+          if (grpFilter && r.groupId !== grpFilter) return false;
+          if (statusFilter === "GRADED" && !r.isGraded) return false;
+          if (statusFilter === "UNGRADED" && r.isGraded) return false;
+          if (q) {
+            const hay = `${r.studentName} ${r.nis} ${r.roleName} ${r.groupName}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+    }
+
+    function renderKpis() {
+      const students = getStudentUsers();
+      const teachers = state.users.filter((u) => u.role === "TEACHER");
+      const allRows = students.map((s) => computeStudent360Summary(s, state.assessments, state.weights));
+      const gradedCount = allRows.filter((r) => r.isGradedByTeacher).length;
+      const pct = students.length ? Math.round((gradedCount / students.length) * 100) : 0;
+      const avgFinal = allRows.length
+        ? (allRows.reduce((acc, r) => acc + r.finalScore, 0) / allRows.length).toFixed(2)
+        : "0.00";
+
+      document.getElementById("kpiTotalStudents").textContent = students.length;
+      document.getElementById("kpiTotalTeachers").textContent = `${teachers.length} Guru Pengampu`;
+      document.getElementById("kpiTotalGroups").textContent = state.groups.length;
+      document.getElementById("kpiTotalClasses").textContent = `${state.classes.length} Kelas Terdaftar`;
+      document.getElementById("kpiGradedProgress").textContent = `${pct}% (${gradedCount}/${students.length})`;
+      document.getElementById("kpiProgressBar").style.width = `${pct}%`;
+      document.getElementById("kpiAvgFinal").textContent = avgFinal;
+      document.getElementById("kpiWeightInfo").textContent =
+        `Bobot: Self ${state.weights.self}% • Peer ${state.weights.peer}% • Guru ${state.weights.teacher}%`;
+    }
+
+    function renderRecapTable() {
+      const rows = buildRecapRows();
+      document.getElementById("recapTableMeta").textContent = `Menampilkan ${rows.length} siswa`;
+
+      const strip = document.getElementById("groupSummaryStrip");
+      strip.innerHTML = state.groups.map((g) => {
+        const gId = g.id || g.docId;
+        const members = getStudentUsers().filter((s) => s.groupId === gId);
+        const graded = members.filter((s) => computeStudent360Summary(s, state.assessments, state.weights).isGradedByTeacher).length;
+        const pct = members.length ? Math.round((graded / members.length) * 100) : 0;
+        return `
+          <div class="mini-summary-card">
+            <div class="mini-summary-head">
+              <span class="mini-summary-title">${escapeHtml(g.name)}</span>
+              <strong>${pct}%</strong>
+            </div>
+            <div class="mini-summary-sub">${escapeHtml(g.title)} • ${graded}/${members.length} dinilai</div>
+            <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>
+        `;
+      }).join("");
+
+      const tbody = document.getElementById("recapTableBody");
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted">Belum ada data penilaian siswa yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((r, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td><strong>${escapeHtml(r.studentName)}</strong><br><span class="text-muted">${escapeHtml(r.nis || "-")}</span></td>
+          <td>${escapeHtml(r.className)}<br><span class="text-muted">${escapeHtml(r.groupName)}</span></td>
+          <td>${escapeHtml(r.roleName)}</td>
+          <td class="num">${r.disiplin ?? "-"}</td>
+          <td class="num">${r.kolaborasi ?? "-"}</td>
+          <td class="num">${r.kualitas ?? "-"}</td>
+          <td class="num">${r.tanggungJawab ?? "-"}</td>
+          <td class="num">${r.selfAvg ?? "-"}</td>
+          <td class="num">${r.peerAvg ?? "-"}</td>
+          <td class="num">${r.teacherAvg ?? "-"}</td>
+          <td class="num"><strong>${r.finalScore}</strong></td>
+          <td>
+            <span class="badge ${r.isGraded ? "badge-success" : "badge-warning"}">
+              ${r.isGraded ? "Sudah Dinilai" : "Belum Dinilai"}
+            </span>
+          </td>
+          <td class="feedback-cell">${escapeHtml(r.feedback || "-")}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderUsersTable() {
+      const roleFilter = document.getElementById("filterUserRole").value;
+      const clsFilter = document.getElementById("filterUserClass").value;
+      const q = document.getElementById("filterUserSearch").value.trim().toLowerCase();
+
+      const filtered = state.users.filter((u) => {
+        if (roleFilter && u.role !== roleFilter) return false;
+        if (clsFilter && u.classId !== clsFilter) return false;
+        if (q) {
+          const hay = `${u.name} ${u.username} ${u.email} ${u.nis || ""}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById("usersTableBody");
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Tidak ada akun pengguna ditemukan.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((u) => {
+        const cls = state.classes.find((c) => (c.id || c.docId) === u.classId);
+        const grp = state.groups.find((g) => (g.id || g.docId) === u.groupId);
+        const isSuspended = u.status === "SUSPENDED" || u.active === false;
+        const isSelf = u.docId === currentUser.docId;
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                ${renderAvatarHtml(u, 36)}
+                <strong>${escapeHtml(u.name)}</strong>
+              </div>
+            </td>
+            <td><code>${escapeHtml(u.username || "-")}</code><br><span class="text-muted">${escapeHtml(u.email || "")}</span></td>
+            <td><span class="badge ${getRoleBadgeClass(u.role)}">${escapeHtml(getRoleLabel(u.role))}</span></td>
+            <td>${escapeHtml(cls ? cls.name : "-")}<br><span class="text-muted">${escapeHtml(grp ? grp.name : "-")}</span></td>
+            <td>${escapeHtml(u.roleId || "-")}<br><span class="text-muted">NIS/NIP: ${escapeHtml(u.nis || "-")}</span></td>
+            <td>${escapeHtml(u.whatsapp || "-")}</td>
+            <td><span class="badge ${isSuspended ? "badge-warning" : "badge-success"}">${isSuspended ? "Suspended" : "Aktif"}</span></td>
+            <td class="actions-col">
+              <div class="action-group">
+                <button type="button" class="btn btn-outline btn-xs" data-edit-user="${escapeHtml(u.docId)}">Ubah</button>
+                ${isSelf ? "" : `<button type="button" class="btn btn-danger-outline btn-xs" data-del-user="${escapeHtml(u.docId)}">Hapus</button>`}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll("[data-edit-user]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const u = state.users.find((x) => x.docId === btn.dataset.editUser);
+          if (u) openUserModal(u);
+        });
+      });
+
+      tbody.querySelectorAll("[data-del-user]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const u = state.users.find((x) => x.docId === btn.dataset.delUser);
+          if (!u) return;
+          const ok = await confirmDialog("Hapus Akun Pengguna", `Yakin ingin menghapus akun "${u.name}" (${u.role})?`);
+          if (!ok) return;
+          showLoader(true, "Menghapus akun...");
+          try {
+            await removeDocument(COLS.USERS, u.docId);
+            showToast("Akun berhasil dihapus.", "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal menghapus akun: " + err.message, "danger");
+          } finally {
+            showLoader(false);
+          }
+        });
+      });
+    }
+
+    function renderClassesAndGroups() {
+      const clsBody = document.getElementById("classesTableBody");
+      clsBody.innerHTML = state.classes.length
+        ? state.classes.map((c) => {
+            const teacher = state.users.find((u) => (u.id || u.docId) === c.teacherId);
+            return `
+              <tr>
+                <td><strong>${escapeHtml(c.name)}</strong></td>
+                <td>${escapeHtml(c.academicYear || "-")}</td>
+                <td>${escapeHtml(teacher ? teacher.name : "Belum ditentukan")}</td>
+                <td class="actions-col">
+                  <div class="action-group">
+                    <button type="button" class="btn btn-outline btn-xs" data-edit-class="${escapeHtml(c.docId)}">Ubah</button>
+                    <button type="button" class="btn btn-danger-outline btn-xs" data-del-class="${escapeHtml(c.docId)}">Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="4" class="text-center text-muted">Belum ada data kelas.</td></tr>`;
+
+      clsBody.querySelectorAll("[data-edit-class]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const c = state.classes.find((x) => x.docId === btn.dataset.editClass);
+          if (c) openClassModal(c);
+        });
+      });
+      clsBody.querySelectorAll("[data-del-class]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const c = state.classes.find((x) => x.docId === btn.dataset.delClass);
+          if (!c) return;
+          const ok = await confirmDialog("Hapus Kelas", `Yakin ingin menghapus kelas "${c.name}"?`);
+          if (!ok) return;
+          showLoader(true, "Menghapus kelas...");
+          try {
+            await removeDocument(COLS.CLASSES, c.docId);
+            showToast("Kelas berhasil dihapus.", "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal menghapus kelas: " + err.message, "danger");
+          } finally {
+            showLoader(false);
+          }
+        });
+      });
+
+      const grpBody = document.getElementById("groupsTableBody");
+      grpBody.innerHTML = state.groups.length
+        ? state.groups.map((g) => {
+            const gId = g.id || g.docId;
+            const cls = state.classes.find((c) => (c.id || c.docId) === g.classId);
+            const teacher = state.users.find((u) => (u.id || u.docId) === g.teacherId);
+            const members = getStudentUsers().filter((s) => s.groupId === gId);
+            return `
+              <tr>
+                <td><strong>${escapeHtml(g.name)}</strong><br><span class="text-muted">${escapeHtml(g.title)}</span></td>
+                <td>${escapeHtml(cls ? cls.name : "-")}</td>
+                <td>${escapeHtml(teacher ? teacher.name : "-")}</td>
+                <td>${members.length} siswa</td>
+                <td class="actions-col">
+                  <div class="action-group">
+                    <button type="button" class="btn btn-outline btn-xs" data-edit-group="${escapeHtml(g.docId)}">Ubah</button>
+                    <button type="button" class="btn btn-danger-outline btn-xs" data-del-group="${escapeHtml(g.docId)}">Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="5" class="text-center text-muted">Belum ada proyek kelompok.</td></tr>`;
+
+      grpBody.querySelectorAll("[data-edit-group]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const g = state.groups.find((x) => x.docId === btn.dataset.editGroup);
+          if (g) openGroupModal(g);
+        });
+      });
+      grpBody.querySelectorAll("[data-del-group]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const g = state.groups.find((x) => x.docId === btn.dataset.delGroup);
+          if (!g) return;
+          const ok = await confirmDialog("Hapus Proyek Kelompok", `Yakin ingin menghapus "${g.name} - ${g.title}"?`);
+          if (!ok) return;
+          showLoader(true, "Menghapus proyek...");
+          try {
+            await removeDocument(COLS.GROUPS, g.docId);
+            showToast("Proyek kelompok berhasil dihapus.", "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal menghapus proyek: " + err.message, "danger");
+          } finally {
+            showLoader(false);
+          }
+        });
+      });
+    }
+
+    function renderStagesAndTasks() {
+      const grid = document.getElementById("stagesCardsGrid");
+      grid.innerHTML = PRODUCTION_STAGES.map((st) => {
+        const saved = state.stages.find((x) => x.stage === st.key || x.docId === st.key) || {};
+        const isActive = Boolean(saved.isActive);
+        const dlInfo = getDeadlineStatus(saved.endDate, false);
+        return `
+          <div class="stage-card ${isActive ? "active-stage" : ""}">
+            <div class="project-card-header" style="margin-bottom:0">
+              <div>
+                <strong>${escapeHtml(st.label)}</strong>
+                <p class="panel-desc">${escapeHtml(st.desc)}</p>
+              </div>
+              <div class="action-group">
+                ${saved.endDate ? `<span class="badge ${dlInfo.badgeClass}">${escapeHtml(dlInfo.label)}</span>` : ""}
+                <span class="badge ${isActive ? "badge-success" : "badge-neutral"}">
+                  ${isActive ? "TAHAP AKTIF" : "Non-Aktif"}
+                </span>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Tanggal Mulai</label>
+                <input type="date" id="stageStart_${st.key}" value="${escapeHtml(saved.startDate || "")}" />
+              </div>
+              <div class="form-group">
+                <label>Batas Akhir (Deadline)</label>
+                <input type="date" id="stageEnd_${st.key}" value="${escapeHtml(saved.endDate || "")}" />
+              </div>
+            </div>
+            <div class="action-group">
+              <button type="button" class="btn btn-outline btn-sm" data-save-stage="${st.key}">Simpan Jadwal</button>
+              ${isActive ? "" : `<button type="button" class="btn btn-primary btn-sm" data-activate-stage="${st.key}">Jadikan Tahap Aktif</button>`}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      grid.querySelectorAll("[data-save-stage]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const key = btn.dataset.saveStage;
+          const startDate = document.getElementById(`stageStart_${key}`).value;
+          const endDate = document.getElementById(`stageEnd_${key}`).value;
+          if (startDate && endDate && startDate > endDate) {
+            showToast("Tanggal mulai tidak boleh melebihi tanggal batas akhir.", "warning");
+            return;
+          }
+          showLoader(true, "Menyimpan jadwal tahap...");
+          try {
+            await saveDocument(COLS.STAGES, key, { stage: key, startDate, endDate });
+            showToast("Jadwal tahapan produksi tersimpan.", "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal menyimpan jadwal: " + err.message, "danger");
+          } finally {
+            showLoader(false);
+          }
+        });
+      });
+
+      grid.querySelectorAll("[data-activate-stage]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const targetKey = btn.dataset.activateStage;
+          showLoader(true, "Mengubah tahap produksi aktif...");
+          try {
+            for (const st of PRODUCTION_STAGES) {
+              await saveDocument(COLS.STAGES, st.key, {
+                stage: st.key,
+                isActive: st.key === targetKey
+              });
+            }
+            showToast(`Tahap ${targetKey} kini aktif.`, "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal mengubah tahap aktif: " + err.message, "danger");
+          } finally {
+            showLoader(false);
+          }
+        });
+      });
+
+      const sortedTasks = [...state.tasks].sort((a, b) => {
+        const da = getDeadlineStatus(a.deadline, a.status === "DONE");
+        const db = getDeadlineStatus(b.deadline, b.status === "DONE");
+        return da.sortOrder - db.sortOrder || da.daysDiff - db.daysDiff;
+      });
+
+      const overdueCount = sortedTasks.filter((t) => getDeadlineStatus(t.deadline, t.status === "DONE").isOverdue).length;
+      const urgentCount = sortedTasks.filter((t) => getDeadlineStatus(t.deadline, t.status === "DONE").isUrgent).length;
+      document.getElementById("adminDeadlineSummary").textContent =
+        `Total ${sortedTasks.length} tugas • ${overdueCount} terlambat (overdue) • ${urgentCount} mendekati deadline (H-3).`;
+
+      const taskBody = document.getElementById("adminTasksTableBody");
+      taskBody.innerHTML = sortedTasks.length
+        ? sortedTasks.map((t) => {
+            const grp = state.groups.find((g) => (g.id || g.docId) === t.groupId);
+            const pic = state.users.find((u) => (u.id || u.docId) === t.assigneeId);
+            const dl = getDeadlineStatus(t.deadline, t.status === "DONE");
+            const badgeCls = t.status === "DONE" ? "badge-success" : t.status === "IN_PROGRESS" ? "badge-info" : "badge-warning";
+            return `
+              <tr class="${dl.isOverdue ? "row-overdue" : ""}">
+                <td><strong>${escapeHtml(t.title)}</strong></td>
+                <td><span class="badge badge-neutral">${escapeHtml(t.stage || "PERSIAPAN")}</span></td>
+                <td>${escapeHtml(grp ? grp.name : "-")}</td>
+                <td>${escapeHtml(t.roleId || "-")} (${escapeHtml(pic ? pic.name : "Semua Tim")})</td>
+                <td>
+                  ${escapeHtml(formatIndoDate(t.deadline))}
+                  <div style="margin-top:3px;"><span class="badge ${dl.badgeClass}">${escapeHtml(dl.label)}</span></div>
+                </td>
+                <td><span class="badge ${badgeCls}">${escapeHtml(t.status || "TODO")}</span></td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="6" class="text-center text-muted">Belum ada daftar tugas produksi.</td></tr>`;
+    }
+
+    function renderSettingsTab() {
+      document.getElementById("rubricAspectsList").innerHTML = RUBRIC_ASPECTS.map((a) => `
+        <li>
+          <div>
+            <strong>${escapeHtml(a.label)}</strong>
+            <p>${escapeHtml(a.desc)}</p>
+          </div>
+          <span class="badge badge-info">0 – 100</span>
+        </li>
+      `).join("");
+
+      document.getElementById("weightSelf").value = state.weights.self;
+      document.getElementById("weightPeer").value = state.weights.peer;
+      document.getElementById("weightTeacher").value = state.weights.teacher;
+      updateWeightTotalDisplay();
+
+      document.getElementById("driveFoldersList").innerHTML = state.driveFolders.map((f, idx) => `
+        <div class="form-group">
+          <label for="driveUrl_${idx}">${escapeHtml(f.name)}</label>
+          <input type="url" id="driveUrl_${idx}" value="${escapeHtml(f.url || "")}" placeholder="https://drive.google.com/drive/folders/..." />
+        </div>
+      `).join("");
+
+      const bcListEl = document.getElementById("adminBroadcastsList");
+      const sortedBc = [...state.broadcasts].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      bcListEl.innerHTML = sortedBc.length
+        ? sortedBc.map((b) => `
+            <div class="mini-summary-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <div>
+                <strong>${escapeHtml(b.title)}</strong>
+                <div class="mini-summary-sub">${escapeHtml(b.message)}</div>
+                <span class="field-hint">Oleh: ${escapeHtml(b.senderName || "Admin")}</span>
+              </div>
+              <button type="button" class="btn btn-danger-outline btn-xs" data-del-bc="${escapeHtml(b.docId)}">Hapus</button>
+            </div>
+          `).join("")
+        : `<p class="text-muted" style="font-size:12px;">Belum ada pengumuman terkirim.</p>`;
+
+      bcListEl.querySelectorAll("[data-del-bc]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ok = await confirmDialog("Hapus Pengumuman", "Hapus pengumuman ini dari papan informasi kelas?");
+          if (!ok) return;
+          try {
+            await removeDocument(COLS.BROADCASTS, btn.dataset.delBc);
+            showToast("Pengumuman berhasil dihapus.", "success");
+            await loadAllAdminData();
+          } catch (err) {
+            showToast("Gagal menghapus pengumuman: " + err.message, "danger");
+          }
+        });
+      });
+    }
+
+    function updateWeightTotalDisplay() {
+      const s = Number(document.getElementById("weightSelf").value || 0);
+      const p = Number(document.getElementById("weightPeer").value || 0);
+      const t = Number(document.getElementById("weightTeacher").value || 0);
+      const total = s + p + t;
+      const el = document.getElementById("weightTotalDisplay");
+      el.textContent = `${total}%`;
+      el.className = total === 100 ? "text-success" : "text-danger";
+    }
+
+    function openUserModal(userObj) {
+      const isEdit = Boolean(userObj);
+      document.getElementById("userModalTitle").textContent = isEdit ? "Ubah Akun Pengguna" : "Tambah Akun Pengguna";
+      document.getElementById("editUserDocId").value = isEdit ? userObj.docId : "";
+      document.getElementById("removeUserAvatarFlag").value = "false";
+      document.getElementById("userAvatarFileInput").value = "";
+      document.getElementById("userAvatarPreviewWrap").innerHTML = renderAvatarHtml(userObj || { name: "Baru" }, 48);
+      document.getElementById("btnRemoveUserAvatar").classList.toggle("hidden", !(isEdit && userObj.avatarUrl));
+
+      document.getElementById("userNameInput").value = isEdit ? userObj.name : "";
+      document.getElementById("userRoleInput").value = isEdit ? userObj.role : "TEACHER";
+      document.getElementById("userUsernameInput").value = isEdit ? (userObj.username || "") : "";
+      document.getElementById("userUsernameInput").disabled = isEdit;
+      document.getElementById("userPasswordInput").value = "";
+      document.getElementById("pwdReqMark").classList.toggle("hidden", isEdit);
+      document.getElementById("pwdHintText").textContent = isEdit
+        ? "Kosongkan jika tidak ingin mengubah kata sandi."
+        : "Wajib diisi minimal 6 karakter.";
+      document.getElementById("userClassInput").value = isEdit ? (userObj.classId || "") : "";
+      document.getElementById("userGroupInput").value = isEdit ? (userObj.groupId || "") : "";
+      document.getElementById("userTheatreRoleInput").value = isEdit ? (userObj.roleId || "") : "";
+      document.getElementById("userNisInput").value = isEdit ? (userObj.nis || "") : "";
+      document.getElementById("userWaInput").value = isEdit ? (userObj.whatsapp || "") : "";
+      document.getElementById("userStatusInput").value = isEdit ? (userObj.status || "ACTIVE") : "ACTIVE";
+      document.getElementById("userModal").classList.remove("hidden");
+    }
+
+    async function handleSaveUser(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveUser");
+      const editDocId = document.getElementById("editUserDocId").value;
+      const name = document.getElementById("userNameInput").value.trim();
+      const role = document.getElementById("userRoleInput").value;
+      const username = document.getElementById("userUsernameInput").value.trim().toLowerCase();
+      const password = document.getElementById("userPasswordInput").value;
+      const classId = document.getElementById("userClassInput").value;
+      const groupId = document.getElementById("userGroupInput").value;
+      const roleId = document.getElementById("userTheatreRoleInput").value;
+      const nis = document.getElementById("userNisInput").value.trim();
+      const whatsapp = document.getElementById("userWaInput").value.trim();
+      const status = document.getElementById("userStatusInput").value;
+      const avatarFile = document.getElementById("userAvatarFileInput").files[0];
+      const removeAvatar = document.getElementById("removeUserAvatarFlag").value === "true";
+
+      if (!name || !username) {
+        showToast("Nama lengkap dan username wajib diisi.", "warning");
+        return;
+      }
+      if (!editDocId && password.length < 6) {
+        showToast("Kata sandi akun baru minimal 6 karakter.", "warning");
+        return;
+      }
+
+      btn.disabled = true;
+      showLoader(true, "Menyimpan data akun & foto...");
+      try {
+        let uploadedAvatarUrl = null;
+        if (avatarFile) {
+          uploadedAvatarUrl = await compressImageFile(avatarFile, 280, 0.72);
+        }
+
+        if (editDocId) {
+          const existing = state.users.find((u) => u.docId === editDocId) || {};
+          const payload = {
+            ...existing,
+            name,
+            role,
+            classId,
+            groupId,
+            roleId,
+            nis,
+            whatsapp,
+            status
+          };
+          if (uploadedAvatarUrl) payload.avatarUrl = uploadedAvatarUrl;
+          else if (removeAvatar) payload.avatarUrl = "";
+
+          if (password && password.length >= 6) {
+            payload.legacyPassword = password;
+          }
+          await saveDocument(COLS.USERS, editDocId, payload);
+          showToast("Perubahan akun berhasil disimpan.", "success");
+        } else {
+          const { uid, email } = await createAuthAccountByAdmin(username, password);
+          await saveDocument(COLS.USERS, uid, {
+            id: uid,
+            authUid: uid,
+            username,
+            email,
+            name,
+            role,
+            classId,
+            groupId,
+            roleId,
+            nis,
+            whatsapp,
+            avatarUrl: uploadedAvatarUrl || "",
+            status
+          });
+          showToast(`Akun ${name} berhasil dibuat.`, "success");
+        }
+        document.getElementById("userModal").classList.add("hidden");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menyimpan akun: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleBulkImportStudents(e) {
+      e.preventDefault();
+      const classId = document.getElementById("bulkDefaultClass").value;
+      const groupId = document.getElementById("bulkDefaultGroup").value;
+      const rawText = document.getElementById("bulkCsvTextarea").value.trim();
+
+      if (!classId || !rawText) {
+        showToast("Pilih kelas tujuan dan isi daftar siswa terlebih dahulu.", "warning");
+        return;
+      }
+
+      const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const parsedRows = [];
+
+      lines.forEach((line, idx) => {
+        const sep = line.includes("\t") ? "\t" : line.includes(";") ? ";" : ",";
+        const cols = line.split(sep).map((c) => c.trim().replace(/^"|"$/g, ""));
+        if (idx === 0 && cols[0].toLowerCase().includes("nama")) return;
+        if (cols.length >= 2 && cols[0] && cols[1]) {
+          parsedRows.push({
+            name: cols[0],
+            username: cols[1].toLowerCase().replace(/\s+/g, ""),
+            password: cols[2] && cols[2].length >= 6 ? cols[2] : (cols[2] || "123456").padEnd(6, "0"),
+            nis: cols[3] || "",
+            roleId: cols[4] || "Aktor / Pemeran",
+            whatsapp: cols[5] || ""
+          });
+        }
+      });
+
+      if (!parsedRows.length) {
+        showToast("Format baris tidak valid. Pastikan minimal ada Nama dan Username.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnRunBulkImport");
+      const statusBox = document.getElementById("bulkImportStatusBox");
+      btn.disabled = true;
+      statusBox.classList.remove("hidden");
+
+      let successCount = 0;
+      const errors = [];
+
+      for (let i = 0; i < parsedRows.length; i++) {
+        const item = parsedRows[i];
+        statusBox.textContent = `Memproses akun ${i + 1} dari ${parsedRows.length}: ${item.name} (${item.username})...`;
+        try {
+          const { uid, email } = await createAuthAccountByAdmin(item.username, item.password);
+          await saveDocument(COLS.USERS, uid, {
+            id: uid,
+            authUid: uid,
+            username: item.username,
+            email,
+            name: item.name,
+            role: "STUDENT",
+            classId,
+            groupId,
+            roleId: item.roleId,
+            nis: item.nis,
+            whatsapp: item.whatsapp,
+            avatarUrl: "",
+            status: "ACTIVE"
+          });
+          successCount += 1;
+        } catch (err) {
+          errors.push(`${item.username}: ${err.message}`);
+        }
+      }
+
+      btn.disabled = false;
+      statusBox.innerHTML =
+        `<strong>Selesai!</strong> Berhasil membuat <strong>${successCount}</strong> dari ${parsedRows.length} akun siswa.` +
+        (errors.length ? `<br><span class="text-danger">Gagal (${errors.length}): ${escapeHtml(errors.slice(0, 3).join("; "))}</span>` : "");
+
+      if (successCount > 0) {
+        showToast(`${successCount} akun siswa berhasil diimpor!`, "success");
+        await loadAllAdminData();
+      }
+    }
+
+    function openClassModal(clsObj) {
+      const isEdit = Boolean(clsObj);
+      document.getElementById("classModalTitle").textContent = isEdit ? "Ubah Kelas" : "Tambah Kelas Baru";
+      document.getElementById("editClassId").value = isEdit ? clsObj.docId : "";
+      document.getElementById("classNameInput").value = isEdit ? clsObj.name : "";
+      document.getElementById("classYearInput").value = isEdit ? (clsObj.academicYear || "2025/2026") : "2025/2026";
+      document.getElementById("classTeacherInput").value = isEdit ? (clsObj.teacherId || "") : "";
+      document.getElementById("classModal").classList.remove("hidden");
+    }
+
+    async function handleSaveClass(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveClass");
+      const editId = document.getElementById("editClassId").value;
+      const name = document.getElementById("classNameInput").value.trim();
+      const academicYear = document.getElementById("classYearInput").value.trim();
+      const teacherId = document.getElementById("classTeacherInput").value;
+
+      if (!name) {
+        showToast("Nama kelas wajib diisi.", "warning");
+        return;
+      }
+
+      btn.disabled = true;
+      showLoader(true, "Menyimpan data kelas...");
+      try {
+        const docId = editId || `cls_${Date.now()}`;
+        await saveDocument(COLS.CLASSES, docId, { id: docId, name, academicYear, teacherId });
+        document.getElementById("classModal").classList.add("hidden");
+        showToast("Data kelas berhasil disimpan.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menyimpan kelas: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    function openGroupModal(grpObj) {
+      const isEdit = Boolean(grpObj);
+      document.getElementById("groupModalTitle").textContent = isEdit ? "Ubah Proyek Kelompok" : "Tambah Proyek Kelompok";
+      document.getElementById("editGroupId").value = isEdit ? grpObj.docId : "";
+      document.getElementById("groupNameInput").value = isEdit ? grpObj.name : "";
+      document.getElementById("groupClassInput").value = isEdit ? (grpObj.classId || "") : "";
+      document.getElementById("groupTitleInput").value = isEdit ? (grpObj.title || "") : "";
+      document.getElementById("groupTeacherInput").value = isEdit ? (grpObj.teacherId || "") : "";
+      document.getElementById("groupLeaderInput").value = isEdit ? (grpObj.leaderId || "") : "";
+      document.getElementById("groupSynopsisInput").value = isEdit ? (grpObj.synopsis || "") : "";
+      document.getElementById("groupModal").classList.remove("hidden");
+    }
+
+    async function handleSaveGroup(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveGroup");
+      const editId = document.getElementById("editGroupId").value;
+      const name = document.getElementById("groupNameInput").value.trim();
+      const classId = document.getElementById("groupClassInput").value;
+      const title = document.getElementById("groupTitleInput").value.trim();
+      const teacherId = document.getElementById("groupTeacherInput").value;
+      const leaderId = document.getElementById("groupLeaderInput").value;
+      const synopsis = document.getElementById("groupSynopsisInput").value.trim();
+
+      if (!name || !classId || !title || !teacherId) {
+        showToast("Nama kelompok, kelas, judul lakon, dan guru penilai wajib diisi.", "warning");
+        return;
+      }
+
+      btn.disabled = true;
+      showLoader(true, "Menyimpan proyek kelompok...");
+      try {
+        const docId = editId || `grp_${Date.now()}`;
+        await saveDocument(COLS.GROUPS, docId, {
+          id: docId,
+          name,
+          classId,
+          title,
+          teacherId,
+          leaderId,
+          synopsis
+        });
+
+        if (leaderId) {
+          const leaderUser = state.users.find((u) => (u.id || u.docId) === leaderId);
+          if (leaderUser) {
+            await saveDocument(COLS.USERS, leaderUser.docId, {
+              role: "LEADER",
+              groupId: docId,
+              classId
+            });
+          }
+        }
+
+        document.getElementById("groupModal").classList.add("hidden");
+        showToast("Data proyek kelompok berhasil disimpan.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menyimpan proyek: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSaveWeights(e) {
+      e.preventDefault();
+      const s = Number(document.getElementById("weightSelf").value);
+      const p = Number(document.getElementById("weightPeer").value);
+      const t = Number(document.getElementById("weightTeacher").value);
+
+      if (s < 0 || p < 0 || t < 0 || s + p + t !== 100) {
+        showToast("Jumlah bobot Self + Peer + Teacher harus tepat 100%.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSaveWeights");
+      btn.disabled = true;
+      showLoader(true, "Menyimpan bobot penilaian...");
+      try {
+        await saveDocument(COLS.SETTINGS, "rubric_weights", { self: s, peer: p, teacher: t });
+        showToast("Bobot penilaian 360° berhasil diperbarui.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menyimpan bobot: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSaveDriveFolders(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveDriveFolders");
+      const folders = state.driveFolders.map((f, idx) => ({
+        index: idx + 1,
+        name: f.name,
+        url: document.getElementById(`driveUrl_${idx}`).value.trim()
+      }));
+
+      btn.disabled = true;
+      showLoader(true, "Menyimpan tautan arsip Drive...");
+      try {
+        await saveDocument(COLS.SETTINGS, "drive_folders", { folders });
+        showToast("12 tautan folder Google Drive berhasil disimpan.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menyimpan tautan Drive: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleSendBroadcast(e) {
+      e.preventDefault();
+      const title = document.getElementById("bcTitle").value.trim();
+      const target = document.getElementById("bcTargetClass").value;
+      const message = document.getElementById("bcMessage").value.trim();
+      const linkUrl = document.getElementById("bcLink").value.trim();
+
+      if (!title || !message) {
+        showToast("Judul dan isi pengumuman wajib diisi.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnSendBroadcast");
+      btn.disabled = true;
+      showLoader(true, "Mengirim siaran pengumuman...");
+      try {
+        const docId = `bc_${Date.now()}`;
+        await saveDocument(COLS.BROADCASTS, docId, {
+          id: docId,
+          title,
+          message,
+          targetClassIds: target === "ALL" ? [] : [target],
+          linkUrl,
+          senderName: currentUser.name,
+          createdAt: new Date().toISOString()
+        });
+        document.getElementById("broadcastForm").reset();
+        showToast("Siaran pengumuman berhasil dikirim ke kelas.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal mengirim pengumuman: " + err.message, "danger");
+      } finally {
+        btn.disabled = false;
+        showLoader(false);
+      }
+    }
+
+    async function handleCarryOverTasks() {
+      const activeStageDoc = state.stages.find((s) => s.isActive);
+      if (!activeStageDoc) {
+        showToast("Tetapkan terlebih dahulu salah satu tahapan sebagai TAHAP AKTIF.", "warning");
+        return;
+      }
+      const activeKey = activeStageDoc.stage || activeStageDoc.docId;
+      const pendingTasks = state.tasks.filter((t) => t.status !== "DONE" && t.stage !== activeKey);
+
+      if (!pendingTasks.length) {
+        showToast("Semua tugas dari tahap sebelumnya sudah selesai.", "info");
+        return;
+      }
+
+      const ok = await confirmDialog(
+        "Carry Over Tugas Tertunda",
+        `Pindahkan ${pendingTasks.length} tugas yang belum selesai dari tahap sebelumnya ke tahap aktif (${activeKey})?`,
+        "Pindahkan Tugas",
+        false
+      );
+      if (!ok) return;
+
+      showLoader(true, "Memindahkan tugas tertunda...");
+      try {
+        for (const t of pendingTasks) {
+          await saveDocument(COLS.TASKS, t.docId, { stage: activeKey });
+        }
+        showToast(`${pendingTasks.length} tugas berhasil dipindahkan ke ${activeKey}.`, "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal menjalankan Carry Over: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function handleSeedDemoData() {
+      const ok = await confirmDialog(
+        "Isi Data Contoh (Demo)",
+        "Sistem akan menambahkan contoh kelas XI Teater, 1 kelompok produksi, serta jadwal 4 tahapan tanpa menghapus akun yang sudah ada. Lanjutkan?",
+        "Tambahkan Contoh",
+        true
+      );
+      if (!ok) return;
+
+      showLoader(true, "Menyiapkan data contoh...");
+      try {
+        await saveDocument(COLS.CLASSES, "cls_demo_xi", {
+          id: "cls_demo_xi",
+          name: "XI Seni Teater 1 (Demo)",
+          academicYear: "2025/2026",
+          teacherId: ""
+        });
+        await saveDocument(COLS.GROUPS, "grp_demo_1", {
+          id: "grp_demo_1",
+          classId: "cls_demo_xi",
+          name: "Kelompok 1 - Teater Cakrawala",
+          title: "Pementasan Lakon 'Ayahku Pulang'",
+          teacherId: "",
+          leaderId: "",
+          synopsis: "Adaptasi drama realis karya Usmar Ismail dengan pendekatan tata panggung minimalis."
+        });
+        for (let i = 0; i < PRODUCTION_STAGES.length; i++) {
+          const st = PRODUCTION_STAGES[i];
+          await saveDocument(COLS.STAGES, st.key, {
+            stage: st.key,
+            isActive: i === 0,
+            startDate: "",
+            endDate: ""
+          });
+        }
+        showToast("Data contoh berhasil ditambahkan.", "success");
+        await loadAllAdminData();
+      } catch (err) {
+        showToast("Gagal membuat data contoh: " + err.message, "danger");
+      } finally {
+        showLoader(false);
+      }
+    }
+  </script>
+</body>
+</html>
+```
