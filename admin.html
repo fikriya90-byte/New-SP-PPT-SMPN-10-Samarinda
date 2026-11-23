@@ -735,9 +735,7 @@
       document.getElementById("btnRunMigration").addEventListener("click", async () => {
         const ok = await confirmDialog(
           "Migrasi Data Lama (1-Klik)",
-          "Seluruh akun, kelas, kelompok, tugas, dan nilai dari sp_ppt_state/production_v1 akan disalin ke koleksi terstruktur. Dokumen lama tetap disimpan sebagai cadangan. Lanjutkan?",
-          "Mulai Migrasi",
-          false
+          "Seluruh akun, kelas, kelompok, tugas, dan nilai dari sp_ppt_state/production_v1 akan disalin ke koleksi terstruktur. Dokumen lama tetap disimpan sebagai cadangan. Lanjutkan?"
         );
         if (!ok) return;
 
@@ -845,9 +843,7 @@
       document.getElementById("btnResyncLegacyData").addEventListener("click", async () => {
         const ok = await confirmDialog(
           "Sinkronisasi Ulang Data Lama",
-          "Sistem akan membaca ulang dokumen sp_ppt_state/production_v1 dan menyelaraskan data ke koleksi terstruktur. Lanjutkan?",
-          "Sinkronkan Sekarang",
-          false
+          "Sistem akan membaca ulang dokumen sp_ppt_state/production_v1 dan menyelaraskan data ke koleksi terstruktur. Lanjutkan?"
         );
         if (!ok) return;
         showLoader(true, "Menyinkronkan data lama...");
@@ -1407,9 +1403,10 @@
       document.getElementById("userUsernameInput").value = isEdit ? (userObj.username || "") : "";
       document.getElementById("userUsernameInput").disabled = isEdit;
       document.getElementById("userPasswordInput").value = "";
+      document.getElementById("userPasswordInput").disabled = isEdit;
       document.getElementById("pwdReqMark").classList.toggle("hidden", isEdit);
       document.getElementById("pwdHintText").textContent = isEdit
-        ? "Kosongkan jika tidak ingin mengubah kata sandi."
+        ? "Kata sandi akun yang sudah ada tidak dapat diubah dari panel ini. Gunakan fitur ganti kata sandi di profil pengguna."
         : "Wajib diisi minimal 6 karakter.";
       document.getElementById("userClassInput").value = isEdit ? (userObj.classId || "") : "";
       document.getElementById("userGroupInput").value = isEdit ? (userObj.groupId || "") : "";
@@ -1456,8 +1453,9 @@
 
         if (editDocId) {
           const existing = state.users.find((u) => u.docId === editDocId) || {};
+          const { docId, ...rest } = existing;
           const payload = {
-            ...existing,
+            ...rest,
             name,
             role,
             classId,
@@ -1470,9 +1468,6 @@
           if (uploadedAvatarUrl) payload.avatarUrl = uploadedAvatarUrl;
           else if (removeAvatar) payload.avatarUrl = "";
 
-          if (password && password.length >= 6) {
-            payload.legacyPassword = password;
-          }
           await saveDocument(COLS.USERS, editDocId, payload);
           showToast("Perubahan akun berhasil disimpan.", "success");
         } else {
@@ -1529,7 +1524,9 @@
             password: cols[2] && cols[2].length >= 6 ? cols[2] : (cols[2] || "123456").padEnd(6, "0"),
             nis: cols[3] || "",
             roleId: cols[4] || "Aktor / Pemeran",
-            whatsapp: cols[5] || ""
+            whatsapp: cols[5] || "",
+            groupId,
+            classId
           });
         }
       });
@@ -1559,8 +1556,8 @@
             email,
             name: item.name,
             role: "STUDENT",
-            classId,
-            groupId,
+            classId: item.classId,
+            groupId: item.groupId,
             roleId: item.roleId,
             nis: item.nis,
             whatsapp: item.whatsapp,
@@ -1790,9 +1787,7 @@
 
       const ok = await confirmDialog(
         "Carry Over Tugas Tertunda",
-        `Pindahkan ${pendingTasks.length} tugas yang belum selesai dari tahap sebelumnya ke tahap aktif (${activeKey})?`,
-        "Pindahkan Tugas",
-        false
+        `Pindahkan ${pendingTasks.length} tugas yang belum selesai dari tahap sebelumnya ke tahap aktif (${activeKey})?`
       );
       if (!ok) return;
 
@@ -1813,9 +1808,7 @@
     async function handleSeedDemoData() {
       const ok = await confirmDialog(
         "Isi Data Contoh (Demo)",
-        "Sistem akan menambahkan contoh kelas XI Teater, 1 kelompok produksi, serta jadwal 4 tahapan tanpa menghapus akun yang sudah ada. Lanjutkan?",
-        "Tambahkan Contoh",
-        true
+        "Sistem akan menambahkan contoh kelas XI Teater, 1 kelompok produksi, serta jadwal 4 tahapan tanpa menghapus akun yang sudah ada. Lanjutkan?"
       );
       if (!ok) return;
 
