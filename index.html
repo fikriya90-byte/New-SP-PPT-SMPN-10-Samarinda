@@ -59,8 +59,7 @@
     }
 
     .login-brand-panel {
-      background:
-        linear-gradient(160deg, rgba(113, 29, 43, 0.94), rgba(45, 10, 17, 0.97));
+      background: linear-gradient(160deg, rgba(113, 29, 43, 0.94), rgba(45, 10, 17, 0.97));
       color: #fffdf9;
       padding: 36px 32px;
       display: flex;
@@ -394,74 +393,57 @@
     </section>
   </main>
 
-  <script src="js/app.js?v=3"></script>
-  <script>
-    (function () {
-      const form = document.getElementById("loginForm");
-      const identifierInput = document.getElementById("loginIdentifier");
-      const passwordInput = document.getElementById("loginPassword");
-      const toggleBtn = document.getElementById("togglePasswordBtn");
-      const submitBtn = document.getElementById("loginSubmitBtn");
-      const statusBox = document.getElementById("loginStatus");
+  <script type="module">
+    import { loginWithIdentifier, redirectByRole } from "./js/app.js";
 
-      function showMessage(type, message) {
-        statusBox.className = "status-box " + type;
-        statusBox.textContent = message;
+    const form = document.getElementById("loginForm");
+    const identifierInput = document.getElementById("loginIdentifier");
+    const passwordInput = document.getElementById("loginPassword");
+    const toggleBtn = document.getElementById("togglePasswordBtn");
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    const statusBox = document.getElementById("loginStatus");
+
+    function showMessage(type, message) {
+      statusBox.className = "status-box " + type;
+      statusBox.textContent = message;
+    }
+
+    function clearMessage() {
+      statusBox.className = "status-box";
+      statusBox.textContent = "";
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      toggleBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const identifier = identifierInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!identifier || !password) {
+        showMessage("error", "Harap isi username/email dan kata sandi terlebih dahulu.");
+        return;
       }
 
-      function clearMessage() {
-        statusBox.className = "status-box";
-        statusBox.textContent = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Memeriksa akun...";
+
+      try {
+        const profile = await loginWithIdentifier(identifier, password);
+        showMessage("info", "Login berhasil, mengalihkan halaman...");
+        redirectByRole(profile.role);
+      } catch (err) {
+        showMessage("error", err.message || "Gagal masuk ke sistem.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Masuk ke Sistem";
       }
-
-      toggleBtn.addEventListener("click", function () {
-        const isHidden = passwordInput.type === "password";
-        passwordInput.type = isHidden ? "text" : "password";
-        toggleBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
-      });
-
-      form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        clearMessage();
-
-        const identifier = (identifierInput.value || "").trim();
-        const password = passwordInput.value || "";
-
-        if (!identifier || !password) {
-          showMessage("error", "Harap isi username/email dan kata sandi terlebih dahulu.");
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Memeriksa akun...";
-
-        try {
-          if (typeof window.SPPPTLogin === "function") {
-            await window.SPPPTLogin(identifier, password);
-          } else if (typeof window.loginUser === "function") {
-            await window.loginUser(identifier, password);
-          } else {
-            showMessage(
-              "info",
-              "Koneksi modul autentikasi (js/app.js) belum merespons. Pastikan file js/app.js sudah ter-upload dan memuat skrip Firebase."
-            );
-          }
-        } catch (err) {
-          const rawMsg = (err && err.message) ? err.message : "Gagal masuk ke sistem.";
-          if (rawMsg.toLowerCase().includes("profil") || rawMsg.toLowerCase().includes("not found")) {
-            showMessage(
-              "info",
-              "Akun terautentikasi tetapi profil pengguna belum terdaftar di database. Silakan minta Admin menambahkan/menyinkronkan profil akun Anda."
-            );
-          } else {
-            showMessage("error", rawMsg);
-          }
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Masuk ke Sistem";
-        }
-      });
-    })();
+    });
   </script>
 </body>
 </html>
