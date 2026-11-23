@@ -24,13 +24,12 @@ import {
 // KONFIGURASI FIREBASE
 // ============================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyA2d9uQ_wM0E3iZ8tR6hN4xV1cK7bJ5pL0",
+  apiKey: "AIzaSyDczk0n-4QvvwTDikDBnuTkRX_SlXIV9JQ",
   authDomain: "penilaian-proyek-teater-siswa.firebaseapp.com",
   projectId: "penilaian-proyek-teater-siswa",
   storageBucket: "penilaian-proyek-teater-siswa.firebasestorage.app",
-  messagingSenderId: "849201756301",
-  appId: "1:849201756301:web:9c8b7a6f5e4d3c2b1a0f9e",
-  measurementId: "G-T4E8A7T9E2"
+  messagingSenderId: "278312873930",
+  appId: "1:278312873930:web:99b43c8d1f923e94a2e933"
 };
 
 // Jika data Anda ada di database default, ganti argumen kedua menjadi "(default)"
